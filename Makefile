@@ -19,6 +19,7 @@ target = odt2tex
 src = src
 rm = rm
 flags = -pipe -Wall -O2
+libs = -lexpat -lzip
 
 objects = $(src)/main.o
 

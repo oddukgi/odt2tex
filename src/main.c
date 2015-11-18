@@ -27,13 +27,13 @@ int main( int argc, char *argv[] ) {
     return -1;
   }
 
-  char *infile = argv[1];
-  char *outdir = argv[2];
+  const char *infile = argv[1];
+  const char *outdir = argv[2];
   int rc = -1;
 
   fprintf( stdout, "  >> Processing: %s to Directory: %s\n", infile, outdir );
 
-  opendir(outdir);
+  DIR *d = opendir(outdir);
   if ( errno == ENOENT ) {
     fprintf( stdout, "  !! Output Directory does not exist, creating...\n" );
     rc = mkdir( outdir, S_IRWXU );
@@ -43,6 +43,24 @@ int main( int argc, char *argv[] ) {
     }
   }
 
+  closedir(d);
+
   fprintf( stdout, "  >> Output Directory OK\n" );
+
+  int zip_error;
+  zip_t *odt = zip_open( infile, ZIP_RDONLY, &zip_error );
+  if ( odt == NULL ) {
+    zip_error_t error;
+    zip_error_init_with_code( &error, zip_error );
+    fprintf( stderr, "  !! Unable to open ODT file: %s\n",
+        zip_error_strerror(&error)
+        );
+    return -1;
+  }
+
+  fprintf( stdout, "  >> ODT file OK\n" );
+
+  zip_close(odt);
+
   return 0;
 }
