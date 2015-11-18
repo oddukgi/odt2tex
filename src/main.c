@@ -7,6 +7,16 @@
 #include <errno.h>
 #include <string.h>
 
+#define BUF_SIZE 4096
+
+void start( void *data, const char *el, const char **attr ) {
+  fprintf( stdout, "Element START: [%s]\n", el );
+}
+
+void end( void *data, const char *el ) {
+  fprintf( stdout, "Element END: [%s]\n", el );
+}
+
 void usage( char *prog_name ) {
   fprintf( stdout,
     "  Usage:\n"
@@ -47,19 +57,50 @@ int main( int argc, char *argv[] ) {
 
   fprintf( stdout, "  >> Output Directory OK\n" );
 
-  int zip_error;
+  int zip_error = 0;
   zip_t *odt = zip_open( infile, ZIP_RDONLY, &zip_error );
   if ( odt == NULL ) {
     zip_error_t error;
     zip_error_init_with_code( &error, zip_error );
     fprintf( stderr, "  !! Unable to open ODT file: %s\n",
         zip_error_strerror(&error)
-        );
+      );
     return -1;
   }
 
   fprintf( stdout, "  >> ODT file OK\n" );
 
+  zip_file_t *contents_xml = zip_fopen( odt, "content.xml", ZIP_FL_UNCHANGED );
+  if ( contents_xml == NULL ) {
+    int zep = 0;
+    int sep = 0;
+    char buffer[BUF_SIZE];
+    zip_error_get( odt, &zep, &sep );
+    zip_error_to_str( buffer, BUF_SIZE, zep, sep );
+    fprintf( stderr, "  !! Unable to open content.xml: %s\n",
+        buffer
+      );
+    zip_close(odt);
+    return -1;
+  }
+
+  XML_Parser p = XML_ParserCreate("UTF-8");
+  XML_SetElementHandler( p, start, end );
+
+  char buffer[BUF_SIZE];
+  memset( buffer, 0, BUF_SIZE );
+
+  int bytes_read = -1;
+  int parse_rc = -1;
+  while ( (bytes_read = zip_fread(contents_xml,buffer,BUF_SIZE-1)) > 0 ) {
+    //fprintf( stdout, buffer );
+    parse_rc = XML_Parse(p,buffer,BUF_SIZE, 0 );
+    fprintf( stdout, "RC=%d\n", parse_rc );
+    fprintf( stderr, "Error: [%s]\n", XML_ErrorString(XML_GetErrorCode(p)));
+    memset( buffer, 0, BUF_SIZE );
+  }
+
+  zip_fclose(contents_xml);
   zip_close(odt);
 
   return 0;
