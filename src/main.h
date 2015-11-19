@@ -8,13 +8,19 @@ enum tex_command {
   TEX_DEFAULT = 0,
   TEX_SECTION,
   TEX_SUBSECTION,
-  TEX_MATH,
-  TEX_FIGURE
+  TEX_SUBSUBSECTION,
+  TEX_ITEM
+};
+
+enum tex_environment {
+  ENV_DEFAULT = 0,
+  ENV_LIST
 };
 
 typedef struct parser_context {
   FILE *f;
-  int cmd;
+  unsigned int cmd;
+  unsigned int env;
 } parser_context_t;
 
 #endif
