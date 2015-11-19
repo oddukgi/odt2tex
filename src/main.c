@@ -7,19 +7,9 @@
 #include <errno.h>
 #include <string.h>
 
+#include "main.h"
+
 #define BUF_SIZE 4096
-
-enum tex_command {
-  TEX_DEFAULT = 0,
-  TEX_SECTION,
-  TEX_SUBSECTION,
-  TEX_MATH
-};
-
-typedef struct parser_context {
-  FILE *f;
-  int cmd;
-} parser_context_t;
 
 void chars( void *data, const char *s, int len ) {
   if ( data == NULL ) {

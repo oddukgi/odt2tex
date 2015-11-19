@@ -1,8 +1,5 @@
 # Tup file for odt2tex
 # Simon Wilper
 # 2015-11-22
-
-preload src
-
 : foreach src/*.c |> gcc -c %f -pipe -Wall -O2 -o %o |> obj/%B.o
 : obj/*.o |> gcc -s -Wl,-O2 %f -lexpat -lzip -o %o |> odt2tex
