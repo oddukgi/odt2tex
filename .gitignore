@@ -2,3 +2,5 @@
 *.o
 odt2tex
 out/
+obj/
+.tup/
