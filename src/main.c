@@ -9,12 +9,54 @@
 
 #define BUF_SIZE 4096
 
+enum tex_command {
+  TEX_DEFAULT = 0,
+  TEX_SECTION,
+  TEX_SUBSECTION,
+  TEX_MATH
+};
+
+typedef struct parser_context {
+  FILE *f;
+  int cmd;
+} parser_context_t;
+
+void chars( void *data, const char *s, int len ) {
+  if ( data == NULL ) {
+    return;
+  }
+
+  parser_context_t *pc = (parser_context_t*)data;
+
+  FILE *f = pc->f;
+
+  char buffer[len+1];
+  memset( buffer, 0, len+1 );
+  strncpy( buffer, s, len );
+
+  if ( pc->cmd == TEX_SECTION ) {
+    fprintf( f, "\\section{%s}\n", buffer );
+  } else {
+    fprintf( f, buffer );
+    fprintf( f, "\n" );
+  }
+}
+
 void start( void *data, const char *el, const char **attr ) {
-  fprintf( stdout, "Element START: [%s]\n", el );
+  if ( data == NULL ) {
+    return;
+  }
+
+  parser_context_t *pc = (parser_context_t*)data;
+
+  if ( strcmp( el, "text:h" ) == 0 ) {
+    pc->cmd = TEX_SECTION;
+  } else {
+    pc->cmd = TEX_DEFAULT;
+  }
 }
 
 void end( void *data, const char *el ) {
-  fprintf( stdout, "Element END: [%s]\n", el );
 }
 
 void usage( char *prog_name ) {
@@ -70,36 +112,80 @@ int main( int argc, char *argv[] ) {
 
   fprintf( stdout, "  >> ODT file OK\n" );
 
-  zip_file_t *contents_xml = zip_fopen( odt, "content.xml", ZIP_FL_UNCHANGED );
+  const char *contents_name = "content.xml";
+
+  zip_file_t *contents_xml = zip_fopen( odt, contents_name, ZIP_FL_UNCHANGED );
   if ( contents_xml == NULL ) {
     int zep = 0;
     int sep = 0;
     char buffer[BUF_SIZE];
     zip_error_get( odt, &zep, &sep );
     zip_error_to_str( buffer, BUF_SIZE, zep, sep );
-    fprintf( stderr, "  !! Unable to open content.xml: %s\n",
+    fprintf( stderr, "  !! Unable to open %s: %s\n",
+        contents_name,
         buffer
       );
     zip_close(odt);
     return -1;
   }
 
-  XML_Parser p = XML_ParserCreate("UTF-8");
-  XML_SetElementHandler( p, start, end );
+  zip_stat_t stat_info;
+  zip_stat( odt, contents_name, ZIP_FL_ENC_GUESS|ZIP_FL_UNCHANGED, &stat_info );
 
-  char buffer[BUF_SIZE];
-  memset( buffer, 0, BUF_SIZE );
+  unsigned long content_length = stat_info.size;
 
-  int bytes_read = -1;
-  int parse_rc = -1;
-  while ( (bytes_read = zip_fread(contents_xml,buffer,BUF_SIZE-1)) > 0 ) {
-    //fprintf( stdout, buffer );
-    parse_rc = XML_Parse(p,buffer,BUF_SIZE, 0 );
-    fprintf( stdout, "RC=%d\n", parse_rc );
-    fprintf( stderr, "Error: [%s]\n", XML_ErrorString(XML_GetErrorCode(p)));
-    memset( buffer, 0, BUF_SIZE );
+  char buffer[content_length+1];
+  memset( buffer, 0, content_length+1 );
+
+  unsigned long bytes_read = zip_fread( contents_xml, buffer, content_length );
+
+  if ( bytes_read != content_length ) {
+    zip_fclose(contents_xml);
+    zip_close(odt);
+    fprintf( stderr, "  !! Content fragmented\n" );
+    return -1;
   }
 
+  char buf_main_file[BUF_SIZE];
+  memset(buf_main_file, 0, BUF_SIZE);
+  snprintf( buf_main_file, BUF_SIZE, "%s/main.tex", outdir );
+  FILE *f_main = fopen( buf_main_file, "w" );
+
+  if ( f_main == NULL ) {
+    zip_fclose(contents_xml);
+    zip_close(odt);
+    fprintf( stderr, "  !! Unable to open main tex output file: %s\n",
+        strerror(errno)
+      );
+    return -1;
+  }
+
+  fprintf( f_main, "\\documentclass{article}\n"
+      "\\begin{document}\n"
+      );
+
+  parser_context_t pc;
+  pc.f = f_main;
+
+  XML_Parser p = XML_ParserCreate("UTF-8");
+  XML_SetUserData( p, &pc );
+  XML_SetElementHandler( p, start, end );
+  XML_SetCharacterDataHandler( p, chars );
+  int parse_rc = XML_Parse( p, buffer, content_length, 1 );
+
+  if ( parse_rc == 0 ) {
+    fprintf( stderr, "  !! Parse Failed: %d %s\n",
+        parse_rc,
+        XML_ErrorString(XML_GetErrorCode(p))
+      );
+  }
+
+  XML_ParserFree(p);
+  fprintf( stdout, "  >> Done\n" );
+
+  fprintf( f_main, "\\end{document}\n" );
+
+  fclose(f_main);
   zip_fclose(contents_xml);
   zip_close(odt);
 
