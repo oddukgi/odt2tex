@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define BUF_SIZE 4096
+
 enum tex_command {
   TEX_DEFAULT = 0,
   TEX_SECTION,
