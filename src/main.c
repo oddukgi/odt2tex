@@ -20,20 +20,6 @@ void usage( char *prog_name ) {
 }
 
 int main( int argc, char *argv[] ) {
-
-  /*
-  struct element *root = create_root();
-  struct element *current = root;
-  current->data = "Intercooler";
-  current = append( current, "Harpoon" );
-  current = append( current, "Bumperfield Generator" );
-  current = append( current, "ISKRA IV" );
-
-  dump( root );
-
-  free_all(root);
-  */
-
   fprintf( stdout, "\n ODT2TeX -- Convert ODT files to LaTeX source files\n"
       "  V 0.0.1\n"
       "  by Simon Wilper (sxw@chronowerks.de)\n"
@@ -76,23 +62,27 @@ int main( int argc, char *argv[] ) {
     return -1;
   }
 
-  fprintf( stdout, "  >> ODT file OK\n" );
+  fprintf( stdout, "  >> Document file OK\n" );
 
-  const char *contents_name = "content.xml";
+  char *contents_name = "content.xml";
 
   zip_file_t *contents_xml = zip_fopen( odt, contents_name, ZIP_FL_UNCHANGED );
   if ( contents_xml == NULL ) {
-    int zep = 0;
-    int sep = 0;
-    char buffer[BUF_SIZE];
-    zip_error_get( odt, &zep, &sep );
-    zip_error_to_str( buffer, BUF_SIZE, zep, sep );
-    fprintf( stderr, "  !! Unable to open %s: %s\n",
-        contents_name,
-        buffer
-      );
-    zip_close(odt);
-    return -1;
+    contents_name = "word/document.xml";
+    contents_xml = zip_fopen( odt, contents_name, ZIP_FL_UNCHANGED );
+    if ( contents_xml == NULL ) {
+      int zep = 0;
+      int sep = 0;
+      char buffer[BUF_SIZE];
+      zip_error_get( odt, &zep, &sep );
+      zip_error_to_str( buffer, BUF_SIZE, zep, sep );
+      fprintf( stderr, "  !! Unable to open %s: %s\n",
+          contents_name,
+          buffer
+        );
+      zip_close(odt);
+      return -1;
+    }
   }
 
   zip_stat_t stat_info;
@@ -131,7 +121,12 @@ int main( int argc, char *argv[] ) {
       );
 
   parser_context_t pc;
+  pc.styles = map_create();
+  pc.styles_current = pc.styles;
+  pc.current_list_style_type = -1;
   pc.f = f_main;
+  pc.cmd = -1;
+  pc.env = -1;
 
   XML_Parser p = XML_ParserCreate("UTF-8");
   XML_SetUserData( p, &pc );
@@ -151,6 +146,7 @@ int main( int argc, char *argv[] ) {
 
   fprintf( f_main, "\\end{document}\n" );
 
+  map_free_all(pc.styles);
   fclose(f_main);
   zip_fclose(contents_xml);
   zip_close(odt);

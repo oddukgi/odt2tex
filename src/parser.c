@@ -53,20 +53,59 @@ void start( void *data, const char *el, const char **attr ) {
   if ( strcmp( el, "text:h" ) == 0 ) {
     unsigned int outline_level = atoi( get_attribute_value(attr,"text:outline-level") );
     switch(outline_level) {
-      case 1:  pc->cmd = TEX_SECTION;    break;
-      case 2:  pc->cmd = TEX_SUBSECTION; break;
-      case 3:  pc->cmd = TEX_SUBSECTION; break;
-      default: pc->cmd = TEX_SECTION;    break;
+      case 1:  pc->cmd = TEX_SECTION;       break;
+      case 2:  pc->cmd = TEX_SUBSECTION;    break;
+      case 3:  pc->cmd = TEX_SUBSUBSECTION; break;
+      default: pc->cmd = TEX_SECTION;       break;
     }
   } else
   if ( strcmp( el, "text:list" ) == 0 ) {
-    fprintf( f, "\\begin{itemize}\n" );
+    struct map *style = map_search( pc->styles, get_attribute_value(attr,"text:style-name") );
+    char *tex_list_style = "itemize";
+    pc->current_list_style_type = LST_BULLET;
+    if ( style != NULL ) {
+      switch ( style->value ) {
+        case LST_NUMBER:
+          tex_list_style = "enumerate";
+          pc->current_list_style_type = LST_NUMBER;
+          break;
+        case LST_BULLET:
+          tex_list_style = "itemize";
+          pc->current_list_style_type = LST_BULLET;
+          break;
+        default:
+          tex_list_style = "itemize";
+          pc->current_list_style_type = LST_BULLET;
+          break;
+      }
+    }
+    fprintf( f, "\\begin{%s}\n", tex_list_style );
     pc->env = ENV_LIST;
   } else
-  if ( strcmp( el, "text:p" ) == 0 && pc->env == ENV_LIST ) {
+  if ( (strcmp( el, "text:p" ) == 0 || strcmp( el, "text:span" ) == 0 ) && pc->env == ENV_LIST ) {
     pc->cmd = TEX_ITEM;
   } else
   if ( strcmp( el, "text:soft-page-break" ) == 0 ) {
+    // ignore page breaks
+  } else
+  if ( strcmp( el, "text:list-style" ) == 0 ) {
+
+    const char *stylename = get_attribute_value( attr,"style:name");
+
+    if ( stylename != NULL ) {
+      pc->styles_current = map_append(
+          pc->styles_current,
+          stylename,
+          -1
+          );
+    }
+
+  } else
+  if ( strcmp( el, "text:list-level-style-bullet" ) == 0 ) {
+    pc->styles_current->value = LST_BULLET;
+  } else
+  if ( strcmp( el, "text:list-level-style-number" ) == 0 ) {
+    pc->styles_current->value = LST_NUMBER;
   } else {
     pc->cmd = TEX_DEFAULT;
   }
@@ -79,12 +118,24 @@ void end( void *data, const char *el ) {
 
   parser_context_t *pc = (parser_context_t*)data;
 
+  fprintf( stdout, "Element: [%s] Environment: %d\n", el, pc->env );
+
   FILE *f = pc->f;
   if ( strcmp( el, "text:list" ) == 0 ) {
+    switch( pc->current_list_style_type ) {
+      case LST_NUMBER:
+        fprintf( f, "\\end{enumerate}\n\n" );
+        break;
+      case LST_BULLET:
+        fprintf( f, "\\end{itemize}\n\n" );
+        break;
+      default:
+        fprintf( f, "\\end{itemize}\n\n" );
+        break;
+    }
     pc->env = ENV_DEFAULT;
-    fprintf( f, "\\end{itemize}\n\n" );
   } else
-  if ( strcmp( el, "text:p" ) == 0 && pc->env == ENV_DEFAULT ) {
+  if ( strcmp( el, "text:p" ) == 0 && (pc->env == ENV_DEFAULT || pc->env == -1) ) {
     fprintf( f, "\n\n" );
   }
 }

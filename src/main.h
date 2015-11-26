@@ -1,10 +1,17 @@
 #ifndef __main_h
 #define __main_h
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "map.h"
 
 #define BUF_SIZE 4096
+
+enum list_style_type {
+  LST_BULLET = 0,
+  LST_NUMBER
+};
 
 enum tex_command {
   TEX_DEFAULT = 0,
@@ -23,6 +30,11 @@ typedef struct parser_context {
   FILE *f;
   unsigned int cmd;
   unsigned int env;
+
+  struct map *styles;
+  struct map *styles_current;
+  int current_list_style_type;
+
 } parser_context_t;
 
 #endif

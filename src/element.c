@@ -22,6 +22,7 @@ void free_all( struct element *root ) {
   while ( current != NULL ) {
     temp = current;
     current = current->next;
+    free(temp->data);
     free(temp);
   }
 }
@@ -32,3 +33,4 @@ struct element* append( struct element *element, void *new_data ) {
   element->next->next = 0;
   return element->next;
 }
+ 
