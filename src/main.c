@@ -11,28 +11,100 @@
 #include "element.h"
 #include "parser.h"
 
+/* print the program usage
+ *
+ * @param char* prog_name The program name to show in the usage
+ */
 void usage( char *prog_name ) {
   fprintf( stdout,
     "  Usage:\n"
-    "  %s [infile.odt] [output directory]\n\n"
+    "    %s in={infile} out={directory} enc={encoding} lang={language}\n\n"
+    "  Where:\n"
+    "    infile: Input ODT file containing a content.xml\n"
+    "       out: Output directory to write the files to\n"
+    "       enc: TeX Encoding (defaults to UTF-8)\n"
+    "      lang: Language for Babel Hyphenation (defaults to en)\n"
+    "\n\n"
     , prog_name
     );
 }
 
+/* Parse the command line options. All options are given as key=value
+ * pairs so we can easily use strtok on the elements and then push it to
+ * a linked list. Since I was too lazy to implement a hashtable I push
+ * key and value one after another so that if we want to find a value we
+ * can get the value from the next of the key element.
+ *
+ * @param int argc number of arguments
+ * @param char** argv array of argument strings
+ * @param struct element *arg_list argument linked list to append the
+ * arguments to
+ * @return int number of arguments parsed
+ */
+int parse_options( int argc, char** argv, struct element *arg_list ) {
+  int n = 0;
+  int i;
+  for ( i=0; i<argc; i++ ) {
+    char *key = strtok( argv[i], "=" );
+    char *value = strtok( NULL, "=" );
+
+    arg_list = append( arg_list, key );
+    arg_list = append( arg_list, value );
+
+    n++;
+  }
+  return n;
+}
+
+/* Get argument from a linked list by given key
+ *
+ * @param struct element *arguments Linked list of arguments
+ * @param const char *arg_name key to search
+ * @returns pointer to the string value of the corresponding key, NULL
+ * if key was not found in list
+ */
+char *get_argument( struct element *arguments, const char *arg_name ) {
+  struct element *e = find( arguments, arg_name );
+  if ( e && e->next && e->next->data )
+    return (char*)e->next->data;
+  return NULL;
+}
+
 int main( int argc, char *argv[] ) {
+
+  struct element *arguments = create_root();
+  struct element *arguments_current = arguments;
+  int nargs = parse_options( argc, argv, arguments_current );
+
   fprintf( stdout, "\n ODT2TeX -- Convert ODT files to LaTeX source files\n"
       "  V 0.0.1\n"
       "  by Simon Wilper (sxw@chronowerks.de)\n"
       "  2015-11-18\n\n"
       );
 
-  if ( argc < 3 ) {
+  if ( nargs < 3 ) {
     usage( argv[0] );
     return -1;
   }
 
-  const char *infile = argv[1];
-  const char *outdir = argv[2];
+  char *infile = get_argument( arguments, "in" );
+  char *outdir = get_argument( arguments, "out" );
+
+  if ( infile == NULL || outdir == NULL ) {
+    usage( argv[0] );
+    return -1;
+  }
+
+  char *encoding = get_argument( arguments, "enc" );
+  if ( encoding == NULL ) {
+    encoding = "utf8";
+  }
+
+  char *babel = get_argument( arguments, "babel" );
+  if ( babel == NULL ) {
+    babel = "english";
+  }
+
   int rc = -1;
 
   fprintf( stdout, "  >> Processing: %s to Directory: %s\n", infile, outdir );
@@ -116,8 +188,12 @@ int main( int argc, char *argv[] ) {
     return -1;
   }
 
-  fprintf( f_main, "\\documentclass{article}\n"
-      "\\begin{document}\n\n"
+  fprintf( f_main, "\\documentclass{article}\n\n"
+      "\\usepackage[%s]{inputenc}\n"
+      "\\usepackage[%s]{babel}\n\n"
+      "\\begin{document}\n\n",
+      encoding,
+      babel
       );
 
   parser_context_t pc;
@@ -127,6 +203,7 @@ int main( int argc, char *argv[] ) {
   pc.f = f_main;
   pc.cmd = -1;
   pc.env = -1;
+  pc.current_list_level = 0;
 
   XML_Parser p = XML_ParserCreate("UTF-8");
   XML_SetUserData( p, &pc );
@@ -146,6 +223,7 @@ int main( int argc, char *argv[] ) {
 
   fprintf( f_main, "\\end{document}\n" );
 
+  free_all(arguments);
   map_free_all(pc.styles);
   fclose(f_main);
   zip_fclose(contents_xml);

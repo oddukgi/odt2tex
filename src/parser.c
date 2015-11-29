@@ -81,6 +81,7 @@ void start( void *data, const char *el, const char **attr ) {
     }
     fprintf( f, "\\begin{%s}\n", tex_list_style );
     pc->env = ENV_LIST;
+    pc->current_list_level++;
   } else
   if ( (strcmp( el, "text:p" ) == 0 || strcmp( el, "text:span" ) == 0 ) && pc->env == ENV_LIST ) {
     pc->cmd = TEX_ITEM;
@@ -101,10 +102,12 @@ void start( void *data, const char *el, const char **attr ) {
     }
 
   } else
-  if ( strcmp( el, "text:list-level-style-bullet" ) == 0 ) {
+  if ( strcmp( el, "text:list-level-style-bullet" ) == 0 &&
+      strcmp( get_attribute_value( attr, "text:level" ), "1") == 0 ) {
     pc->styles_current->value = LST_BULLET;
   } else
-  if ( strcmp( el, "text:list-level-style-number" ) == 0 ) {
+  if ( strcmp( el, "text:list-level-style-number" ) == 0 &&
+      strcmp( get_attribute_value( attr, "text:level" ), "1") == 0 ) {
     pc->styles_current->value = LST_NUMBER;
   } else {
     pc->cmd = TEX_DEFAULT;
@@ -117,8 +120,6 @@ void end( void *data, const char *el ) {
   }
 
   parser_context_t *pc = (parser_context_t*)data;
-
-  fprintf( stdout, "Element: [%s] Environment: %d\n", el, pc->env );
 
   FILE *f = pc->f;
   if ( strcmp( el, "text:list" ) == 0 ) {
@@ -133,7 +134,9 @@ void end( void *data, const char *el ) {
         fprintf( f, "\\end{itemize}\n\n" );
         break;
     }
-    pc->env = ENV_DEFAULT;
+    pc->current_list_level--;
+    if ( pc->current_list_level <= 0 )
+      pc->env = ENV_DEFAULT;
   } else
   if ( strcmp( el, "text:p" ) == 0 && (pc->env == ENV_DEFAULT || pc->env == -1) ) {
     fprintf( f, "\n\n" );

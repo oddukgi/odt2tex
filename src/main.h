@@ -34,6 +34,7 @@ typedef struct parser_context {
   struct map *styles;
   struct map *styles_current;
   int current_list_style_type;
+  int current_list_level;
 
 } parser_context_t;
 
