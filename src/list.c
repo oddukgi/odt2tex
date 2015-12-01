@@ -1,14 +1,14 @@
-#include "element.h"
+#include "list.h"
 
-struct element* create_root() {
-  struct element* root = malloc( sizeof( struct element ) );
+struct list* create_root() {
+  struct list* root = malloc( sizeof( struct list ) );
   root->data = 0;
   root->next = 0;
   return root;
 }
 
-void dump( struct element *root ) {
-  struct element *current = root;
+void dump( struct list *root ) {
+  struct list *current = root;
   unsigned int i = 0;
   while ( current != NULL ) {
     fprintf( stdout, "[% 4d] %s\n", i++, (char*)current->data );
@@ -16,9 +16,9 @@ void dump( struct element *root ) {
   }
 }
 
-void free_all( struct element *root ) {
-  struct element *current = root;
-  struct element *temp;
+void free_all( struct list *root ) {
+  struct list *current = root;
+  struct list *temp;
   while ( current != NULL ) {
     temp = current;
     current = current->next;
@@ -27,23 +27,23 @@ void free_all( struct element *root ) {
   }
 }
 
-struct element* append( struct element *element, void *new_data ) {
-  element->next = malloc( sizeof( struct element ) );
-  element->next->data = 0;
-  element->next->next = 0;
+struct list* append( struct list *list, void *new_data ) {
+  list->next = malloc( sizeof( struct list ) );
+  list->next->data = 0;
+  list->next->next = 0;
 
   if ( new_data != NULL ) {
     char *buffer = malloc(ELEM_BUFFER_SIZE);
     memset( buffer, 0, ELEM_BUFFER_SIZE );
     strncpy( buffer, new_data, ELEM_BUFFER_SIZE-1 );
-    element->next->data = buffer;
+    list->next->data = buffer;
   }  
 
-  return element->next;
+  return list->next;
 }
  
-struct element* find( struct element *root, const char *key ) {
-  struct element *current = root;
+struct list* find( struct list *root, const char *key ) {
+  struct list *current = root;
   while ( current != NULL ) {
     if ( current->data != NULL && strcmp( current->data, key ) == 0 ) {
       return current;

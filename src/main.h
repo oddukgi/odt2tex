@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "map.h"
+#include "list.h"
+#include "parser.h"
 
 #define BUF_SIZE 4096
 

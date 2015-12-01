@@ -8,8 +8,6 @@
 #include <string.h>
 
 #include "main.h"
-#include "element.h"
-#include "parser.h"
 
 /* print the program usage
  *
@@ -37,11 +35,11 @@ void usage( char *prog_name ) {
  *
  * @param int argc number of arguments
  * @param char** argv array of argument strings
- * @param struct element *arg_list argument linked list to append the
+ * @param struct list *arg_list argument linked list to append the
  * arguments to
  * @return int number of arguments parsed
  */
-int parse_options( int argc, char** argv, struct element *arg_list ) {
+int parse_options( int argc, char** argv, struct list *arg_list ) {
   int n = 0;
   int i;
   for ( i=0; i<argc; i++ ) {
@@ -58,13 +56,13 @@ int parse_options( int argc, char** argv, struct element *arg_list ) {
 
 /* Get argument from a linked list by given key
  *
- * @param struct element *arguments Linked list of arguments
+ * @param struct list *arguments Linked list of arguments
  * @param const char *arg_name key to search
  * @returns pointer to the string value of the corresponding key, NULL
  * if key was not found in list
  */
-char *get_argument( struct element *arguments, const char *arg_name ) {
-  struct element *e = find( arguments, arg_name );
+char *get_argument( struct list *arguments, const char *arg_name ) {
+  struct list *e = find( arguments, arg_name );
   if ( e && e->next && e->next->data )
     return (char*)e->next->data;
   return NULL;
@@ -72,8 +70,8 @@ char *get_argument( struct element *arguments, const char *arg_name ) {
 
 int main( int argc, char *argv[] ) {
 
-  struct element *arguments = create_root();
-  struct element *arguments_current = arguments;
+  struct list *arguments = create_root();
+  struct list  *arguments_current = arguments;
   int nargs = parse_options( argc, argv, arguments_current );
 
   fprintf( stdout, "\n ODT2TeX -- Convert ODT files to LaTeX source files\n"
