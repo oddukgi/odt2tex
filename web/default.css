@@ -1,0 +1,103 @@
+/*
+ * ODT2TeX info page css
+ * Simon Wilper
+ * 2015-11-29
+ */
+
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+#contents {
+  padding: 20px;
+}
+
+#headline {
+  text-align: right;
+  -moz-hyphens: none;
+}
+
+q {
+  font-family: serif;
+  font-style: italic;
+}
+
+h1, h2 {
+  font-weight: normal;
+}
+
+h1 {
+  font-size: 6em;
+  letter-spacing: 4px;
+  font-variant: small-caps;
+  margin: 0;
+  padding: 0;
+  background: rgb(50,50,50);
+  color: white;
+  padding: 10px;
+  text-align: center;
+}
+
+h2 {
+  letter-spacing: 4px;
+  margin: 40px 0 0 0;
+  padding: 0;
+}
+
+p {
+  line-height: 150%;
+  text-align: justify;
+  margin: 0 0 10px 0;
+  padding: 0;
+  -moz-hyphens: auto;
+}
+
+dl dt {
+  font-weight: bold;
+  font-variant: small-caps;
+  letter-spacing: 2px;
+}
+
+dl dd {
+  margin: 0px 0px 10px 20px;
+}
+
+ul {
+  margin: 0px 0px 20px 0px;
+}
+
+ul li {
+  margin: 0px 0px 10px 0px;
+}
+
+table {
+  border: 1px solid rgb(180,180,180);
+  border-spacing: 0;
+  margin: 5px auto 10px auto;
+  width: 100%;
+}
+
+table tr td {
+  text-align: center;
+}
+
+table tr:first-child td {
+  border-bottom: 1px solid rgb(180,180,180);
+  padding: 5px;
+  font-weight: bold;
+}
+
+img {
+  margin: 10px;
+}
+
+footer {
+  font-size: .8em;
+  color: rgb(80,80,80);
+  margin: 60px 0 0 0;
+  padding: 10px 0 20px 0;
+  text-align: center;
+  border-top: 1px solid black;
+}

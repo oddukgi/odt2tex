@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>ODT2TeX</title>
+		<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="icon" href="favicon.ico" type="image/vnd.microsoft.icon">
+    <link type="text/css" rel="stylesheet" href="default.css">
+	</head>
+
+	<body>
+    <h1>ODT2TeX</h1>
+
+    <div id="contents">
+      <p id="headline">
+        <q>What if I told you you can convert ODT to TeX files without having
+          Libre/OpenOffice installed?</q><br>&ndash; me 11/2015
+      </p>
+      <h2>What?</h2>
+      <p>
+        <code>odt2tex</code> is a conversion tool that converts ODT
+        (Libre/OpenOffice text documents) to LaTeX .tex input files released
+        under <a href="license.txt">MIT license</a>.  It is written in plain
+        ANSI C with and depends only on two further libraries:
+      </p>
+      <dl>
+        <dt><a href="http://www.nih.at/libzip/index.html">libzip</a></dt>
+        <dd>library for opening and reading ZIP archives since Libre/OpenOffice
+        files are ZIP compressed archives</dd>
+        <dt><a href="http://www.jclark.com/xml/expat.html">expat</a></dt>
+        <dd>lightweight event based XML parser</dd>
+      </dl>
+      <p>
+        The project is in early development stage. The following features
+        are supported yet:
+      <p>
+      <ul>
+        <li>Extraction of contiguous text paragraphs</li>
+        <li>Nested level of ordered and unordered lists</li>
+      </ul>
+      <p>
+        Planned features:
+      </p>
+      <ul>
+        <li>Convert tables to tabular environments</li>
+        <li>Picture conversion</li>
+        <li>Convert embedded Libre/OpenOffce Draw files to pstricks</li>
+        <li>StarOffice Math 5.0 to TeX Math conversion</li>
+      </ul>
+      <p>
+        Example of a very simple document conversion (click image for lager version):
+      </p>
+      <table>
+        <tr>
+          <td>Office Source Document</td>
+          <td>Converted Document</td>
+        </tr>
+        <tr>
+          <td>
+            <a href="soffice.png">
+              <img src="soffice-200.png" alt="Office Source Document">
+            </a>
+          </td>
+          <td>
+            <a href="texpdf.png">
+              <img src="texpdf-200.png" alt="Converted PDFLaTeX Document">
+            </a>
+          </td>
+        </tr>
+      </table>
+      <h2>How?</h2>
+      <p>
+        <code>odt2tex</code> opens the ZIP file to access the contents.xml
+        feeding that to the expat XML parser. All embedded objects like
+        math or pictures are extracted first. The output is a
+        <code>main.tex</code> file that can be processed by
+        <code>pdflatex</code> to obtain a PDF file.
+      </p>
+      <p>
+        The build system used for this project is
+        <code><a href="http://gittup.org/tup/">tup</a></code>
+        which is in several points superior to make. But if you still want
+        to use Make nobody stops you from writing a Makefile or use your
+        build system of choice.
+      </p>
+      <h2>Where?</h2>
+      <p>
+        Development takes place at
+        <a href="https://github.com/simonaw/odt2tex">Github</a>. Feel free
+        to send pull request if interested to contribute.
+      </p>
+      <h2>Who?</h2>
+        <p>
+          Simon Wilper
+          <a href="mailto:sxw@chronowerks.de">sxw@chronowerks.de</a>
+        </p>
+      </ul>
+  
+      <footer>
+        Last Update: 2015-11-29 &middot; <a href="imprint.html">Imprint</a>
+      </footer>
+    </div>
+	</body>
+</html>
