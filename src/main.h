@@ -1,8 +1,14 @@
 #ifndef __main_h
 #define __main_h
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <zip.h>
+#include <expat.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <errno.h>
 #include <string.h>
 #include "map.h"
 #include "list.h"
@@ -39,5 +45,7 @@ typedef struct parser_context {
   int current_list_level;
 
 } parser_context_t;
+
+int extract_file_to( zip_t*, const char*, const char* );
 
 #endif

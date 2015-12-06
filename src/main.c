@@ -1,13 +1,39 @@
-#include <stdio.h>
-#include <zip.h>
-#include <expat.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <errno.h>
-#include <string.h>
-
 #include "main.h"
+
+int extract_file_to( zip_t* zipfile, const char* filename, const char *target_dir ) {
+  zip_file_t *f = zip_fopen( zipfile, filename, ZIP_FL_UNCHANGED );
+  if ( f == NULL ) {
+    int zep = 0;
+    int sep = 0;
+    char buffer[BUF_SIZE];
+    zip_error_get( zipfile, &zep, &sep );
+    zip_error_to_str( buffer, BUF_SIZE, zep, sep );
+    fprintf( stderr, "  !! Unable to open %s: %s\n",
+        filename,
+        buffer
+      );
+    zip_close(zipfile);
+    return -1;
+  }
+
+  zip_stat_t stat_info;
+  zip_stat( zipfile, filename, ZIP_FL_ENC_GUESS|ZIP_FL_UNCHANGED, &stat_info );
+
+  unsigned long content_length = stat_info.size;
+
+  char buffer[content_length+1];
+  memset( buffer, 0, content_length+1 );
+
+  unsigned long bytes_read = zip_fread( f, buffer, content_length );
+
+  if ( bytes_read != content_length ) {
+    zip_fclose(f);
+    zip_close(zipfile);
+    fprintf( stderr, "  !! Content fragmented\n" );
+    return -1;
+  }
+  return 0;
+}
 
 /* print the program usage
  *
@@ -120,6 +146,15 @@ int main( int argc, char *argv[] ) {
   closedir(d);
 
   fprintf( stdout, "  >> Output Directory OK\n" );
+
+  char imgdir[128];
+  snprintf( imgdir, 128, "%s/%s", outdir, "img" );
+  rc = mkdir( imgdir, S_IRWXU );
+  if ( rc < -1 ) {
+    fprintf( stderr, "  !! Unable to create image output directory: %s\n", strerror(errno) );
+    return -1;
+  }
+  fprintf( stdout, "  >> Image Directory OK\n" );
 
   int zip_error = 0;
   zip_t *odt = zip_open( infile, ZIP_RDONLY, &zip_error );
