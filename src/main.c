@@ -1,6 +1,7 @@
 #include "main.h"
 
-int extract_file_to( zip_t* zipfile, const char* filename, const char *target_dir ) {
+int extract_file_to( zip_t* zipfile, const char* filename, const char *target ) {
+  fprintf( stdout, "  >> Extracting %s\n", filename );
   zip_file_t *f = zip_fopen( zipfile, filename, ZIP_FL_UNCHANGED );
   if ( f == NULL ) {
     int zep = 0;
@@ -12,7 +13,6 @@ int extract_file_to( zip_t* zipfile, const char* filename, const char *target_di
         filename,
         buffer
       );
-    zip_close(zipfile);
     return -1;
   }
 
@@ -28,10 +28,26 @@ int extract_file_to( zip_t* zipfile, const char* filename, const char *target_di
 
   if ( bytes_read != content_length ) {
     zip_fclose(f);
-    zip_close(zipfile);
     fprintf( stderr, "  !! Content fragmented\n" );
     return -1;
   }
+
+  FILE *f_out = fopen( target, "wb" );
+  if ( f_out == NULL ) {
+    fprintf( stderr, "  !! Unable to open output file: %s\n", strerror( errno ) );
+    return -1;
+  }
+  unsigned long bytes_written = fwrite( buffer, 1, content_length, f_out );
+  fclose(f_out);
+  zip_fclose(f);
+
+  if ( content_length != bytes_written ) {
+    fprintf( stderr, "  !! Content (%ld) differs from Bytes written (%ld).\n",
+       content_length, bytes_written );
+    return -1;
+  }
+  fprintf( stdout, "    >> %ldK written\n", bytes_written/1024 );
+
   return 0;
 }
 
@@ -168,6 +184,9 @@ int main( int argc, char *argv[] ) {
   }
 
   fprintf( stdout, "  >> Document file OK\n" );
+
+  //Pictures/10000000000010C000000C907244FDAA.jpg
+  extract_file_to( odt, "Thumbnails/thumbnail.png", "sparta.jpg" );
 
   char *contents_name = "content.xml";
 
