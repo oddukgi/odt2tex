@@ -1,7 +1,7 @@
 #include "main.h"
 
 int extract_file_to( zip_t* zipfile, const char* filename, const char *target ) {
-  fprintf( stdout, "  >> Extracting %s\n", filename );
+  fprintf( stdout, "  >> Extracting %s to %s\n", filename, target );
   zip_file_t *f = zip_fopen( zipfile, filename, ZIP_FL_UNCHANGED );
   if ( f == NULL ) {
     int zep = 0;
@@ -21,19 +21,20 @@ int extract_file_to( zip_t* zipfile, const char* filename, const char *target ) 
 
   unsigned long content_length = stat_info.size;
 
-  char buffer[content_length+1];
-  memset( buffer, 0, content_length+1 );
+  void *buffer = malloc(content_length);
 
   unsigned long bytes_read = zip_fread( f, buffer, content_length );
 
   if ( bytes_read != content_length ) {
     zip_fclose(f);
+    free(buffer);
     fprintf( stderr, "  !! Content fragmented\n" );
     return -1;
   }
 
   FILE *f_out = fopen( target, "wb" );
   if ( f_out == NULL ) {
+    free(buffer);
     fprintf( stderr, "  !! Unable to open output file: %s\n", strerror( errno ) );
     return -1;
   }
@@ -44,11 +45,49 @@ int extract_file_to( zip_t* zipfile, const char* filename, const char *target ) 
   if ( content_length != bytes_written ) {
     fprintf( stderr, "  !! Content (%ld) differs from Bytes written (%ld).\n",
        content_length, bytes_written );
+    free(buffer);
     return -1;
   }
   fprintf( stdout, "    >> %ldK written\n", bytes_written/1024 );
+  free(buffer);
 
   return 0;
+}
+
+/** extract all files that start with prefix to target
+ *
+ * @param zip_t* pointer to open zip file
+ * @param struct list* the list to append the items to
+ * @param const char* prefix
+ * @param const char* target directory
+ *
+ * @returns 0 on success, -1 on failure
+ */
+int extract_all_files( zip_t* zip, const char *prefix, const char *target_dir ) {
+  if ( zip == NULL ) {
+    return -1;
+  }
+
+  long nfiles = zip_get_num_entries( zip, ZIP_FL_UNCHANGED );
+
+  long i;
+  for ( i=0; i<nfiles; i++ ) {
+    const char *zip_filename_full = zip_get_name( zip, i, ZIP_FL_UNCHANGED );
+    if ( strstr( zip_filename_full, prefix ) ) {
+      const char *zip_filename = zip_filename_full+strlen(prefix);
+
+      char buffer[BUF_SIZE];
+      memset(buffer, 0, BUF_SIZE);
+      snprintf( buffer, BUF_SIZE, "%s/%s", target_dir, zip_filename );
+
+      if ( extract_file_to( zip, zip_filename_full, buffer ) < 0 ) {
+        fprintf( stderr, "  !! Failed\n" );
+      }
+    }
+  }
+
+  return 0;
+
 }
 
 /* print the program usage
@@ -185,8 +224,8 @@ int main( int argc, char *argv[] ) {
 
   fprintf( stdout, "  >> Document file OK\n" );
 
-  //Pictures/10000000000010C000000C907244FDAA.jpg
-  extract_file_to( odt, "Thumbnails/thumbnail.png", "sparta.jpg" );
+  // extract all pictures to imgdir
+  extract_all_files( odt, "Pictures/", imgdir );
 
   char *contents_name = "content.xml";
 
@@ -242,6 +281,7 @@ int main( int argc, char *argv[] ) {
 
   fprintf( f_main, "\\documentclass{article}\n\n"
       "\\usepackage[%s]{inputenc}\n"
+      "\\usepackage{graphicx}\n"
       "\\usepackage[%s]{babel}\n\n"
       "\\begin{document}\n\n",
       encoding,
@@ -256,6 +296,7 @@ int main( int argc, char *argv[] ) {
   pc.cmd = -1;
   pc.env = -1;
   pc.current_list_level = 0;
+  pc.imgdir = "img";
 
   XML_Parser p = XML_ParserCreate("UTF-8");
   XML_SetUserData( p, &pc );

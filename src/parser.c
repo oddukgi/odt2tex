@@ -38,6 +38,10 @@ void chars( void *data, const char *s, int len ) {
     fprintf( f, "\\item %s\n", buffer );
   } else {
     fprintf( f, buffer );
+
+    if ( pc->env == ENV_FRAME ) {
+      fprintf( stdout, "In frame: [%s]\n", buffer );
+    }
   }
 }
 
@@ -109,6 +113,17 @@ void start( void *data, const char *el, const char **attr ) {
   if ( strcmp( el, "text:list-level-style-number" ) == 0 &&
       strcmp( get_attribute_value( attr, "text:level" ), "1") == 0 ) {
     pc->styles_current->value = LST_NUMBER;
+  } else
+  if ( strcmp( el, "draw:image" ) == 0 ) {
+    const char *picture_name = get_attribute_value( attr, "xlink:href" );
+    if ( strstr( picture_name, "Pictures/" ) ) {
+      fprintf( f, "\\begin{figure}[ht]\n" );
+      fprintf( f, "  \\includegraphics[width=90mm]{%s/%s}\n", pc->imgdir, strstr( picture_name, "/" )+1 );
+      fprintf( f, "\\end{figure}\n\n" );
+    }
+  } else
+  if ( strcmp( el, "draw:frame" ) == 0 ) {
+    pc->env = ENV_FRAME;
   } else {
     pc->cmd = TEX_DEFAULT;
   }
@@ -140,5 +155,8 @@ void end( void *data, const char *el ) {
   } else
   if ( strcmp( el, "text:p" ) == 0 && (pc->env == ENV_DEFAULT || pc->env == -1) ) {
     fprintf( f, "\n\n" );
+  } else
+  if ( strcmp( el, "draw:frame" ) == 0 ) {
+    pc->env = ENV_DEFAULT;
   }
 }

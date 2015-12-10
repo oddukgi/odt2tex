@@ -15,7 +15,7 @@ struct list {
 struct list *create_root();
 void dump( struct list* );
 void free_all( struct list* );
-struct list *append( struct list*, void* );
+struct list *append( struct list*, const void* );
 struct list *find( struct list*, const char* );
 
 #endif

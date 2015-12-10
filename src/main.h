@@ -31,7 +31,8 @@ enum tex_command {
 
 enum tex_environment {
   ENV_DEFAULT = 0,
-  ENV_LIST
+  ENV_LIST,
+  ENV_FRAME
 };
 
 typedef struct parser_context {
@@ -44,8 +45,11 @@ typedef struct parser_context {
   int current_list_style_type;
   int current_list_level;
 
+  char *imgdir;
+
 } parser_context_t;
 
 int extract_file_to( zip_t*, const char*, const char* );
+int extract_all_files( zip_t*, const char*, const char* );
 
 #endif

@@ -27,7 +27,7 @@ void free_all( struct list *root ) {
   }
 }
 
-struct list* append( struct list *list, void *new_data ) {
+struct list* append( struct list *list, const void *new_data ) {
   list->next = malloc( sizeof( struct list ) );
   list->next->data = 0;
   list->next->next = 0;
