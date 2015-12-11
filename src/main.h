@@ -35,6 +35,14 @@ enum tex_environment {
   ENV_FRAME,
 };
 
+enum text_style {
+  TXT_BOLD       = 1,
+  TXT_ITALIC     = 2,
+  TXT_UNDERLINE  = 4,
+  TXT_TYPEWRITER = 8,
+  TXT_SMALLCAPS  = 16
+};
+
 typedef struct parser_context {
   FILE *f;
   char *current_xml_tag;
@@ -46,9 +54,13 @@ typedef struct parser_context {
   int current_list_style_type;
   int current_list_level;
   int current_frame_level;
+  double current_frame_width;
   char *last_frame_chars;
   int caption_string_offset;
   int graphics_count;
+  struct map *text_styles;
+  struct map *text_styles_current;
+  int span_level;
 
   char *imgdir;
 

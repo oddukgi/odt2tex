@@ -301,15 +301,21 @@ int main( int argc, char *argv[] ) {
   pc.current_frame_level = 0;
   pc.last_frame_chars = (char*)malloc(128);
   memset(pc.last_frame_chars,0,128);
+  pc.current_frame_width = 0.0;
   pc.graphics_count = 0;
   pc.imgdir = "img";
   pc.caption_string_offset = 2;
+  pc.text_styles = map_create();
+  pc.text_styles_current = pc.text_styles;
+  pc.span_level = 0;
   
   char *caption_offset = get_argument( arguments, "captionoffset" );
   if ( caption_offset != NULL ) {
-    pc.caption_string_offset = atoi(caption_offset);
+    int offset = atoi(caption_offset);
+    if ( offset >= 0 && offset < 128 ) {
+      pc.caption_string_offset = offset;
+    }
   }
-
 
   XML_Parser p = XML_ParserCreate("UTF-8");
   XML_SetUserData( p, &pc );
@@ -329,9 +335,12 @@ int main( int argc, char *argv[] ) {
 
   fprintf( f_main, "\\end{document}\n" );
 
+  //map_dump( pc.text_styles );
+
   free( pc.last_frame_chars );
   free_all(arguments);
   map_free_all(pc.styles);
+  map_free_all(pc.text_styles);
   fclose(f_main);
   zip_fclose(contents_xml);
   zip_close(odt);

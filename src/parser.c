@@ -119,12 +119,45 @@ void start( void *data, const char *el, const char **attr ) {
     const char *picture_name = get_attribute_value( attr, "xlink:href" );
     if ( strstr( picture_name, "Pictures/" ) ) {
       fprintf( f, "\\begin{figure}[ht]\n" );
-      fprintf( f, "  \\includegraphics[width=90mm]{%s/%s}\n", pc->imgdir, strstr( picture_name, "/" )+1 );
+      fprintf( f, "\\centering\n" );
+      fprintf( f, "  \\includegraphics[width=%lfmm]{%s/%s}\n", pc->current_frame_width,
+          pc->imgdir, strstr( picture_name, "/" )+1 );
     }
   } else
   if ( strcmp( el, "draw:frame" ) == 0 ) {
     pc->env = ENV_FRAME;
     pc->current_frame_level++;
+    pc->current_frame_width = atof( get_attribute_value( attr, "svg:width" ) );
+  } else
+  if ( (strcmp( el, "style:style" ) == 0) &&
+     (strcmp(get_attribute_value( attr, "style:family" ),"text") == 0 )
+      ) {
+    const char *stylename = get_attribute_value( attr, "style:name" );
+    pc->text_styles_current = map_append( pc->text_styles_current,
+        stylename, 0 );
+  } else
+  if ( strcmp( el, "style:text-properties" ) == 0 ) {
+    const char *font_weight = get_attribute_value( attr, "fo:font-weight" );
+    if ( font_weight != NULL && strcmp(font_weight, "bold" ) == 0 )
+      pc->text_styles_current->value |= TXT_BOLD;
+
+    const char *font_style = get_attribute_value( attr, "fo:font-style" );
+    if ( font_style != NULL && strcmp(font_style, "italic" ) == 0 )
+      pc->text_styles_current->value |= TXT_ITALIC;
+  } else
+  if ( strcmp( el, "text:span" ) == 0 ) {
+    const char *stylename = get_attribute_value( attr, "text:style-name" );
+    struct map *result = map_search( pc->text_styles, stylename );
+    if ( result != NULL ) {
+      if ( (result->value & TXT_BOLD) == TXT_BOLD ) {
+        fprintf( f, "\\textbf{" );
+        pc->span_level++;
+      }
+      if ( (result->value & TXT_ITALIC) == TXT_ITALIC ) {
+        fprintf( f, "\\textit{" );
+        pc->span_level++;
+      }
+    }
   } else {
     pc->cmd = TEX_DEFAULT;
   }
@@ -168,6 +201,9 @@ void end( void *data, const char *el ) {
       memset( pc->last_frame_chars, 0, 128 );
       pc->env = ENV_DEFAULT;
     }
-
+  } else
+  if ( strcmp( el, "text:span" ) == 0 && pc->span_level > 0 ) {
+    pc->span_level--;
+    fprintf( f, "}" );
   }
 }
