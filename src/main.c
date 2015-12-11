@@ -103,6 +103,7 @@ void usage( char *prog_name ) {
     "       out: Output directory to write the files to\n"
     "       enc: TeX Encoding (defaults to UTF-8)\n"
     "      lang: Language for Babel Hyphenation (defaults to en)\n"
+    "    captionoffset: Number of characters to strip from caption (default 2)\n"
     "\n\n"
     , prog_name
     );
@@ -289,6 +290,7 @@ int main( int argc, char *argv[] ) {
       );
 
   parser_context_t pc;
+  pc.current_xml_tag = 0;
   pc.styles = map_create();
   pc.styles_current = pc.styles;
   pc.current_list_style_type = -1;
@@ -296,7 +298,18 @@ int main( int argc, char *argv[] ) {
   pc.cmd = -1;
   pc.env = -1;
   pc.current_list_level = 0;
+  pc.current_frame_level = 0;
+  pc.last_frame_chars = (char*)malloc(128);
+  memset(pc.last_frame_chars,0,128);
+  pc.graphics_count = 0;
   pc.imgdir = "img";
+  pc.caption_string_offset = 2;
+  
+  char *caption_offset = get_argument( arguments, "captionoffset" );
+  if ( caption_offset != NULL ) {
+    pc.caption_string_offset = atoi(caption_offset);
+  }
+
 
   XML_Parser p = XML_ParserCreate("UTF-8");
   XML_SetUserData( p, &pc );
@@ -316,6 +329,7 @@ int main( int argc, char *argv[] ) {
 
   fprintf( f_main, "\\end{document}\n" );
 
+  free( pc.last_frame_chars );
   free_all(arguments);
   map_free_all(pc.styles);
   fclose(f_main);

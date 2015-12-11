@@ -32,11 +32,12 @@ enum tex_command {
 enum tex_environment {
   ENV_DEFAULT = 0,
   ENV_LIST,
-  ENV_FRAME
+  ENV_FRAME,
 };
 
 typedef struct parser_context {
   FILE *f;
+  char *current_xml_tag;
   unsigned int cmd;
   unsigned int env;
 
@@ -44,6 +45,10 @@ typedef struct parser_context {
   struct map *styles_current;
   int current_list_style_type;
   int current_list_level;
+  int current_frame_level;
+  char *last_frame_chars;
+  int caption_string_offset;
+  int graphics_count;
 
   char *imgdir;
 

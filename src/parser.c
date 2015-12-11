@@ -36,12 +36,12 @@ void chars( void *data, const char *s, int len ) {
   } else
   if ( pc->cmd == TEX_ITEM ) {
     fprintf( f, "\\item %s\n", buffer );
+  } else
+  if ( pc->env == ENV_FRAME ) {
+    memset( pc->last_frame_chars, 0, 128 );
+    strncpy( pc->last_frame_chars, buffer, 127 );
   } else {
     fprintf( f, buffer );
-
-    if ( pc->env == ENV_FRAME ) {
-      fprintf( stdout, "In frame: [%s]\n", buffer );
-    }
   }
 }
 
@@ -51,6 +51,7 @@ void start( void *data, const char *el, const char **attr ) {
   }
 
   parser_context_t *pc = (parser_context_t*)data;
+  pc->current_xml_tag = (char*)el;
 
   FILE *f = pc->f;
 
@@ -119,11 +120,11 @@ void start( void *data, const char *el, const char **attr ) {
     if ( strstr( picture_name, "Pictures/" ) ) {
       fprintf( f, "\\begin{figure}[ht]\n" );
       fprintf( f, "  \\includegraphics[width=90mm]{%s/%s}\n", pc->imgdir, strstr( picture_name, "/" )+1 );
-      fprintf( f, "\\end{figure}\n\n" );
     }
   } else
   if ( strcmp( el, "draw:frame" ) == 0 ) {
     pc->env = ENV_FRAME;
+    pc->current_frame_level++;
   } else {
     pc->cmd = TEX_DEFAULT;
   }
@@ -157,6 +158,16 @@ void end( void *data, const char *el ) {
     fprintf( f, "\n\n" );
   } else
   if ( strcmp( el, "draw:frame" ) == 0 ) {
-    pc->env = ENV_DEFAULT;
+    pc->current_frame_level--;
+    if ( pc->current_frame_level == 0 ) {
+      pc->graphics_count++;
+      if ( pc->last_frame_chars != NULL && strlen(pc->last_frame_chars) > 0 )
+        fprintf( f, "  \\caption{%s}\n", pc->last_frame_chars+pc->caption_string_offset );
+      fprintf( f, "  \\label{fig%d}\n", pc->graphics_count );
+      fprintf( f, "\\end{figure}\n\n" );
+      memset( pc->last_frame_chars, 0, 128 );
+      pc->env = ENV_DEFAULT;
+    }
+
   }
 }
