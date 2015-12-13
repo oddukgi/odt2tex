@@ -157,7 +157,7 @@ int main( int argc, char *argv[] ) {
   int nargs = parse_options( argc, argv, arguments_current );
 
   fprintf( stdout, "\n ODT2TeX -- Convert ODT files to LaTeX source files\n"
-      "  V 0.0.5 - 2015-12-13\n"
+      "  V 0.0.6 - 2015-12-13\n"
       "  by Simon Wilper (sxw@chronowerks.de)\n"
       "\n"
       );
@@ -334,8 +334,6 @@ int main( int argc, char *argv[] ) {
   fprintf( stdout, "  >> Done\n" );
 
   fprintf( f_main, "\\end{document}\n" );
-
-  //map_dump( pc.text_styles );
 
   free( pc.last_frame_chars );
   free_all(arguments);

@@ -1,6 +1,6 @@
 # ODT to TeX converter
 
-V0.0.1 - 2015-11-22
+V0.0.6 - 2015-12-13
 Simon Wilper
 
 Plain C program that takes a ODT file and an output directory to write

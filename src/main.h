@@ -39,8 +39,7 @@ enum text_style {
   TXT_BOLD       = 1,
   TXT_ITALIC     = 2,
   TXT_UNDERLINE  = 4,
-  TXT_TYPEWRITER = 8,
-  TXT_SMALLCAPS  = 16
+  TXT_SMALLCAPS  = 8
 };
 
 typedef struct parser_context {

@@ -150,6 +150,10 @@ void start( void *data, const char *el, const char **attr ) {
     if ( text_underline != NULL && strcmp(text_underline, "solid" ) == 0 )
       pc->text_styles_current->value |= TXT_UNDERLINE;
 
+    const char *font_variant = get_attribute_value( attr, "fo:font-variant" );
+    if ( font_variant != NULL && strcmp(font_variant, "small-caps" ) == 0 )
+      pc->text_styles_current->value |= TXT_SMALLCAPS;
+
   } else
   if ( strcmp( el, "text:span" ) == 0 ) {
     const char *stylename = get_attribute_value( attr, "text:style-name" );
@@ -165,6 +169,10 @@ void start( void *data, const char *el, const char **attr ) {
       }
       if ( (result->value & TXT_UNDERLINE) == TXT_UNDERLINE ) {
         fprintf( f, "\\underline{" );
+        pc->span_level++;
+      }
+      if ( (result->value & TXT_SMALLCAPS) == TXT_SMALLCAPS ) {
+        fprintf( f, "\\textsc{" );
         pc->span_level++;
       }
     }
