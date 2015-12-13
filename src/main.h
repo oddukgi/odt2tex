@@ -33,6 +33,7 @@ enum tex_environment {
   ENV_DEFAULT = 0,
   ENV_LIST,
   ENV_FRAME,
+  ENV_TABLE
 };
 
 enum text_style {
