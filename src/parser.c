@@ -137,6 +137,7 @@ void start( void *data, const char *el, const char **attr ) {
         stylename, 0 );
   } else
   if ( strcmp( el, "style:text-properties" ) == 0 ) {
+
     const char *font_weight = get_attribute_value( attr, "fo:font-weight" );
     if ( font_weight != NULL && strcmp(font_weight, "bold" ) == 0 )
       pc->text_styles_current->value |= TXT_BOLD;
@@ -144,6 +145,11 @@ void start( void *data, const char *el, const char **attr ) {
     const char *font_style = get_attribute_value( attr, "fo:font-style" );
     if ( font_style != NULL && strcmp(font_style, "italic" ) == 0 )
       pc->text_styles_current->value |= TXT_ITALIC;
+
+    const char *text_underline = get_attribute_value( attr, "style:text-underline-style" );
+    if ( text_underline != NULL && strcmp(text_underline, "solid" ) == 0 )
+      pc->text_styles_current->value |= TXT_UNDERLINE;
+
   } else
   if ( strcmp( el, "text:span" ) == 0 ) {
     const char *stylename = get_attribute_value( attr, "text:style-name" );
@@ -155,6 +161,10 @@ void start( void *data, const char *el, const char **attr ) {
       }
       if ( (result->value & TXT_ITALIC) == TXT_ITALIC ) {
         fprintf( f, "\\textit{" );
+        pc->span_level++;
+      }
+      if ( (result->value & TXT_UNDERLINE) == TXT_UNDERLINE ) {
+        fprintf( f, "\\underline{" );
         pc->span_level++;
       }
     }
