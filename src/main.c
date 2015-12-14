@@ -97,13 +97,14 @@ int extract_all_files( zip_t* zip, const char *prefix, const char *target_dir ) 
 void usage( char *prog_name ) {
   fprintf( stdout,
     "  Usage:\n"
-    "    %s in={infile} out={directory} enc={encoding} lang={language}\n\n"
+    "    %s in={infile} out={directory}\n\n"
     "  Where:\n"
-    "    infile: Input ODT file containing a content.xml\n"
-    "       out: Output directory to write the files to\n"
-    "       enc: TeX Encoding (defaults to UTF-8)\n"
-    "      lang: Language for Babel Hyphenation (defaults to en)\n"
-    "    captionoffset: Number of characters to strip from caption (default 2)\n"
+    "           infile: Input ODT file containing a content.xml\n"
+    "              out: Output directory to write the files to\n"
+    "              enc: TeX Encoding (defaults to UTF-8)\n"
+    "             lang: Language for Babel Hyphenation (defaults to en)\n"
+    "    captionoffset: Number of characters to strip from caption (0-128, default 2)\n"
+    "    tablecolwidth: Table column Width (0-200, default 30)\n"
     "\n\n"
     , prog_name
     );
@@ -280,7 +281,7 @@ int main( int argc, char *argv[] ) {
     return -1;
   }
 
-  fprintf( f_main, "\\documentclass{article}\n\n"
+  fprintf( f_main, "\\documentclass{report}\n\n"
       "\\usepackage[%s]{inputenc}\n"
       "\\usepackage{graphicx}\n"
       "\\usepackage[%s]{babel}\n\n"
@@ -308,6 +309,18 @@ int main( int argc, char *argv[] ) {
   pc.text_styles = map_create();
   pc.text_styles_current = pc.text_styles;
   pc.span_level = 0;
+  pc.table_column_count = 0;
+  pc.table_column_current_index = 0;
+  pc.table_row_current_index = 0;
+  pc.table_column_width = 30;
+
+  char *str_table_column_width = get_argument( arguments, "tablecolwidth" );
+  if ( str_table_column_width != NULL ) {
+    int table_column_width = atoi(str_table_column_width);
+    if ( table_column_width >= 0 && table_column_width < 200 ) {
+      pc.table_column_width = table_column_width;
+    }
+  }
   
   char *caption_offset = get_argument( arguments, "captionoffset" );
   if ( caption_offset != NULL ) {

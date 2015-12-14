@@ -23,6 +23,7 @@ enum list_style_type {
 
 enum tex_command {
   TEX_DEFAULT = 0,
+  TEX_CHAPTER,
   TEX_SECTION,
   TEX_SUBSECTION,
   TEX_SUBSUBSECTION,
@@ -33,7 +34,9 @@ enum tex_environment {
   ENV_DEFAULT = 0,
   ENV_LIST,
   ENV_FRAME,
-  ENV_TABLE
+  ENV_TABLE,
+  ENV_TABLE_ROW,
+  ENV_TABLE_CELL
 };
 
 enum text_style {
@@ -61,6 +64,10 @@ typedef struct parser_context {
   struct map *text_styles;
   struct map *text_styles_current;
   int span_level;
+  int table_column_count;
+  int table_row_current_index;
+  int table_column_current_index;
+  int table_column_width;
 
   char *imgdir;
 

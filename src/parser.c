@@ -25,6 +25,9 @@ void chars( void *data, const char *s, int len ) {
   memset( buffer, 0, len+1 );
   strncpy( buffer, s, len );
 
+  if ( pc->cmd == TEX_CHAPTER ) {
+    fprintf( f, "\\chapter{%s}\n", buffer );
+  } else
   if ( pc->cmd == TEX_SECTION ) {
     fprintf( f, "\\section{%s}\n", buffer );
   } else
@@ -58,9 +61,10 @@ void start( void *data, const char *el, const char **attr ) {
   if ( strcmp( el, "text:h" ) == 0 ) {
     unsigned int outline_level = atoi( get_attribute_value(attr,"text:outline-level") );
     switch(outline_level) {
-      case 1:  pc->cmd = TEX_SECTION;       break;
-      case 2:  pc->cmd = TEX_SUBSECTION;    break;
-      case 3:  pc->cmd = TEX_SUBSUBSECTION; break;
+      case 1:  pc->cmd = TEX_CHAPTER;       break;
+      case 2:  pc->cmd = TEX_SECTION;       break;
+      case 3:  pc->cmd = TEX_SUBSECTION;    break;
+      case 4:  pc->cmd = TEX_SUBSUBSECTION; break;
       default: pc->cmd = TEX_SECTION;       break;
     }
   } else
@@ -176,7 +180,37 @@ void start( void *data, const char *el, const char **attr ) {
         pc->span_level++;
       }
     }
-  } else {
+  } else
+  if ( strcmp( el, "table:table" ) == 0 ) {
+    pc->env = ENV_TABLE;
+
+    fprintf( f,
+        "\\begin{table}[ht]\n"
+        "\\centering\n"
+        "\\begin{tabular}"
+        );
+  } else
+  if ( strcmp( el, "table:table-row" ) == 0 ) {
+    pc->env = ENV_TABLE_ROW;
+  } else
+  if ( strcmp( el, "table:table-cell" ) == 0 ) {
+    pc->env = ENV_TABLE_CELL;
+    if ( pc->table_row_current_index == 0 ) {
+      fprintf( f, "\\bfseries " );
+    }
+  } else
+  if ( strcmp( el, "table:table-column" ) == 0 ) {
+    const char *str_ncols = get_attribute_value( attr, "table:number-columns-repeated" );
+    if ( str_ncols != NULL ) {
+      int ncols = atoi(str_ncols);
+      pc->table_column_count = ncols;
+      fprintf( f, "{" );
+      for ( int i = 0; i < ncols; i++ )
+        fprintf( f, "p{%dmm}", pc->table_column_width );
+      fprintf( f, "}\n" );
+    }
+  }
+  else {
     pc->cmd = TEX_DEFAULT;
   }
 }
@@ -219,6 +253,29 @@ void end( void *data, const char *el ) {
       memset( pc->last_frame_chars, 0, 128 );
       pc->env = ENV_DEFAULT;
     }
+  } else
+  if ( strcmp( el, "table:table" ) == 0 ) {
+    pc->env = ENV_DEFAULT;
+
+    fprintf( f,
+        "\\end{tabular}\n"
+        "\\end{table}\n"
+        );
+  } else
+  if ( strcmp( el, "table:table-row" ) == 0 ) {
+    pc->env = ENV_TABLE;
+    fprintf( f, " \\\\\n" );
+
+    if ( pc->table_row_current_index == 0 )
+      fprintf( f, "\\hline\n" );
+
+    pc->table_row_current_index++;
+    pc->table_column_current_index = 0;
+  } else
+  if ( strcmp( el, "table:table-cell" ) == 0 ) {
+    if ( pc->table_column_current_index < pc->table_column_count-1 )
+      fprintf( f, " & " );
+    pc->table_column_current_index++;
   } else
   if ( strcmp( el, "text:span" ) == 0 && pc->span_level > 0 ) {
     pc->span_level--;
