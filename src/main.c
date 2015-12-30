@@ -129,8 +129,8 @@ int parse_options( int argc, char** argv, struct list *arg_list ) {
     char *key = strtok( argv[i], "=" );
     char *value = strtok( NULL, "=" );
 
-    arg_list = append( arg_list, key );
-    arg_list = append( arg_list, value );
+    arg_list = list_append( arg_list, key );
+    arg_list = list_append( arg_list, value );
 
     n++;
   }
@@ -145,15 +145,14 @@ int parse_options( int argc, char** argv, struct list *arg_list ) {
  * if key was not found in list
  */
 char *get_argument( struct list *arguments, const char *arg_name ) {
-  struct list *e = find( arguments, arg_name );
+  struct list *e = list_find( arguments, arg_name );
   if ( e && e->next && e->next->data )
     return (char*)e->next->data;
   return NULL;
 }
 
 int main( int argc, char *argv[] ) {
-
-  struct list *arguments = create_root();
+  struct list *arguments = list_create();
   struct list  *arguments_current = arguments;
   int nargs = parse_options( argc, argv, arguments_current );
 
@@ -309,16 +308,15 @@ int main( int argc, char *argv[] ) {
   pc.text_styles = map_create();
   pc.text_styles_current = pc.text_styles;
   pc.span_level = 0;
-  pc.table_column_count = 0;
-  pc.table_column_current_index = 0;
-  pc.table_row_current_index = 0;
-  pc.table_column_width = 30;
+  pc.table_column_width_mm = 30;
+  pc.table = 0;
+  pc.table_current = 0;
 
-  char *str_table_column_width = get_argument( arguments, "tablecolwidth" );
-  if ( str_table_column_width != NULL ) {
-    int table_column_width = atoi(str_table_column_width);
-    if ( table_column_width >= 0 && table_column_width < 200 ) {
-      pc.table_column_width = table_column_width;
+  char *str_table_column_width_mm = get_argument( arguments, "tablecolwidth" );
+  if ( str_table_column_width_mm != NULL ) {
+    int table_column_width_mm = atoi(str_table_column_width_mm);
+    if ( table_column_width_mm >= 0 && table_column_width_mm < 200 ) {
+      pc.table_column_width_mm = table_column_width_mm;
     }
   }
   
@@ -349,9 +347,10 @@ int main( int argc, char *argv[] ) {
   fprintf( f_main, "\\end{document}\n" );
 
   free( pc.last_frame_chars );
-  free_all(arguments);
+  list_free(arguments);
   map_free_all(pc.styles);
   map_free_all(pc.text_styles);
+  list_free( pc.table );
   fclose(f_main);
   zip_fclose(contents_xml);
   zip_close(odt);

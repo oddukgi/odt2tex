@@ -12,10 +12,14 @@ struct list {
   struct list *next;
 };
 
-struct list *create_root();
-void dump( struct list* );
-void free_all( struct list* );
-struct list *append( struct list*, const void* );
-struct list *find( struct list*, const char* );
+struct list *list_create();
+void list_dump( struct list* );
+void list_free( struct list* );
+struct list *list_append( struct list*, const void* );
+struct list *list_find( struct list*, const char* );
+struct list *list_reverse( struct list* );
+struct list *list_insert( struct list*, unsigned int, const void* );
+struct list *list_remove( struct list*, unsigned int );
+struct list *list_at( struct list*, unsigned int );
 
 #endif
