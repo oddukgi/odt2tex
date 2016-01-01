@@ -249,8 +249,40 @@ void end( void *data, const char *el ) {
     pc->env = ENV_DEFAULT;
 
     pc->table_current = pc->table;
+    if ( pc->table->next ) pc->table_current = pc->table_current->next;
+
+    unsigned int ncols = 0;
     while(pc->table_current) {
-      fprintf( f, "[%s] // ", (char*)pc->table_current->data );
+      if ( pc->table_current->data != NULL ) ncols++; else break;
+      pc->table_current = pc->table_current->next;
+    }
+
+    pc->table_current = pc->table;
+    if ( pc->table->next ) pc->table_current = pc->table_current->next;
+
+    int i;
+    fprintf( f, "\\begin{tabular}{" );
+    for ( i = 0; i<ncols; i++ ) {
+      fprintf( f, "p{%dmm}", pc->table_column_width_mm );
+    }
+    fprintf( f, "}\n" );
+
+    i = 0;
+    unsigned int nrows = 0;
+    while(pc->table_current) {
+      if ( pc->table_current->data != NULL ) {
+        fprintf( f, "%s%s", (nrows==0?"\\bfseries ":""), (char*)pc->table_current->data );
+        i++;
+        if ( i < ncols ) {
+          fprintf( f, " & " );
+        } else {
+          i=0;
+        }
+      } else {
+        fprintf( f, " \\\\\n" );
+        if ( nrows == 0 ) fprintf( f, "\\hline\n" );
+        nrows++;
+      }
       pc->table_current = pc->table_current->next;
     }
 
@@ -258,6 +290,9 @@ void end( void *data, const char *el ) {
         "\\end{tabular}\n"
         "\\end{table}\n"
         );
+
+    list_free( pc->table );
+    pc->table = 0;
   } else
   if ( strcmp( el, "table:table-row" ) == 0 ) {
     pc->env = ENV_TABLE;

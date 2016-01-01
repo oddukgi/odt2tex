@@ -152,12 +152,13 @@ char *get_argument( struct list *arguments, const char *arg_name ) {
 }
 
 int main( int argc, char *argv[] ) {
+
   struct list *arguments = list_create();
   struct list  *arguments_current = arguments;
   int nargs = parse_options( argc, argv, arguments_current );
 
   fprintf( stdout, "\n ODT2TeX -- Convert ODT files to LaTeX source files\n"
-      "  V 0.0.7 - 2015-12-14\n"
+      "  V 0.0.8 - 2016-01-01\n"
       "  by Simon Wilper (sxw@chronowerks.de)\n"
       "\n"
       );
