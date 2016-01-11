@@ -43,7 +43,11 @@ void chars( void *data, const char *s, int len ) {
   if ( pc->env == ENV_FRAME ) {
     memset( pc->last_frame_chars, 0, 128 );
     strncpy( pc->last_frame_chars, buffer, 127 );
-  } else {
+  } else
+  if ( pc->env == ENV_TABLE_CELL ) {
+    pc->table_current = list_append( pc->table_current, buffer );
+  }
+  else {
     fprintf( f, buffer );
   }
 }
@@ -187,30 +191,17 @@ void start( void *data, const char *el, const char **attr ) {
     fprintf( f,
         "\\begin{table}[ht]\n"
         "\\centering\n"
-        "\\begin{tabular}"
         );
+
+    pc->table = list_create();
+    pc->table_current = pc->table;
   } else
   if ( strcmp( el, "table:table-row" ) == 0 ) {
     pc->env = ENV_TABLE_ROW;
   } else
   if ( strcmp( el, "table:table-cell" ) == 0 ) {
     pc->env = ENV_TABLE_CELL;
-    if ( pc->table_row_current_index == 0 ) {
-      fprintf( f, "\\bfseries " );
-    }
-  } else
-  if ( strcmp( el, "table:table-column" ) == 0 ) {
-    const char *str_ncols = get_attribute_value( attr, "table:number-columns-repeated" );
-    if ( str_ncols != NULL ) {
-      int ncols = atoi(str_ncols);
-      pc->table_column_count = ncols;
-      fprintf( f, "{" );
-      for ( int i = 0; i < ncols; i++ )
-        fprintf( f, "p{%dmm}", pc->table_column_width );
-      fprintf( f, "}\n" );
-    }
-  }
-  else {
+  } else {
     pc->cmd = TEX_DEFAULT;
   }
 }
@@ -257,25 +248,57 @@ void end( void *data, const char *el ) {
   if ( strcmp( el, "table:table" ) == 0 ) {
     pc->env = ENV_DEFAULT;
 
+    pc->table_current = pc->table;
+    if ( pc->table->next ) pc->table_current = pc->table_current->next;
+
+    unsigned int ncols = 0;
+    while(pc->table_current) {
+      if ( pc->table_current->data != NULL ) ncols++; else break;
+      pc->table_current = pc->table_current->next;
+    }
+
+    pc->table_current = pc->table;
+    if ( pc->table->next ) pc->table_current = pc->table_current->next;
+
+    int i;
+    fprintf( f, "\\begin{tabular}{" );
+    for ( i = 0; i<ncols; i++ ) {
+      fprintf( f, "p{%dmm}", pc->table_column_width_mm );
+    }
+    fprintf( f, "}\n" );
+
+    i = 0;
+    unsigned int nrows = 0;
+    while(pc->table_current) {
+      if ( pc->table_current->data != NULL ) {
+        fprintf( f, "%s%s", (nrows==0?"\\bfseries ":""), (char*)pc->table_current->data );
+        i++;
+        if ( i < ncols ) {
+          fprintf( f, " & " );
+        } else {
+          i=0;
+        }
+      } else {
+        fprintf( f, " \\\\\n" );
+        if ( nrows == 0 ) fprintf( f, "\\hline\n" );
+        nrows++;
+      }
+      pc->table_current = pc->table_current->next;
+    }
+
     fprintf( f,
         "\\end{tabular}\n"
         "\\end{table}\n"
         );
+
+    list_free( pc->table );
+    pc->table = 0;
   } else
   if ( strcmp( el, "table:table-row" ) == 0 ) {
     pc->env = ENV_TABLE;
-    fprintf( f, " \\\\\n" );
-
-    if ( pc->table_row_current_index == 0 )
-      fprintf( f, "\\hline\n" );
-
-    pc->table_row_current_index++;
-    pc->table_column_current_index = 0;
+    pc->table_current = list_append( pc->table_current, 0 );
   } else
   if ( strcmp( el, "table:table-cell" ) == 0 ) {
-    if ( pc->table_column_current_index < pc->table_column_count-1 )
-      fprintf( f, " & " );
-    pc->table_column_current_index++;
   } else
   if ( strcmp( el, "text:span" ) == 0 && pc->span_level > 0 ) {
     pc->span_level--;

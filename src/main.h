@@ -61,15 +61,13 @@ typedef struct parser_context {
   char *last_frame_chars;
   int caption_string_offset;
   int graphics_count;
+  char *imgdir;
   struct map *text_styles;
   struct map *text_styles_current;
   int span_level;
-  int table_column_count;
-  int table_row_current_index;
-  int table_column_current_index;
-  int table_column_width;
-
-  char *imgdir;
+  int table_column_width_mm;
+  struct list *table;
+  struct list *table_current;
 
 } parser_context_t;
 
