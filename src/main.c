@@ -99,13 +99,13 @@ void usage( char *prog_name ) {
     "  Usage:\n"
     "    %s in={infile} out={directory}\n\n"
     "  Where:\n"
-    "           infile: Input ODT file containing a content.xml\n"
+    "               in: Input ODT file containing a content.xml\n"
     "              out: Output directory to write the files to\n"
     "              enc: TeX Encoding (defaults to UTF-8)\n"
     "             lang: Language for Babel Hyphenation (defaults to en)\n"
     "    captionoffset: Number of characters to strip from caption (0-128, default 2)\n"
     "    tablecolwidth: Table column Width (0-200, default 30)\n"
-    "\n\n"
+    "\n"
     , prog_name
     );
 }
