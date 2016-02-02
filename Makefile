@@ -28,4 +28,4 @@ clean :
 	-@$(rm) $(target) $(src)/*.o 2>/dev/null
 
 install:
-	install $(target) $(DESTDIR)
+	install -D $(target) $(DESTDIR)
