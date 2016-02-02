@@ -22,7 +22,10 @@ all: $(target)
 $(target) : $(objects)
 	$(compiler) -s -Wl,-O2 -o $(target) $(objects) $(libs)
 	
-.PHONY : clean
+.PHONY : clean install
 
 clean :
 	-@$(rm) $(target) $(src)/*.o 2>/dev/null
+
+install:
+	install $(target) $(DESTDIR)

@@ -158,7 +158,7 @@ int main( int argc, char *argv[] ) {
   int nargs = parse_options( argc, argv, arguments_current );
 
   fprintf( stdout, "\n ODT2TeX -- Convert ODT files to LaTeX source files\n"
-      "  V 0.0.8 - 2016-01-01\n"
+      "  V 0.0.9 - 2016-02-02\n"
       "  by Simon Wilper (sxw@chronowerks.de)\n"
       "\n"
       );
