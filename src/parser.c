@@ -44,6 +44,11 @@ void chars( void *data, const char *s, int len ) {
     memset( pc->last_frame_chars, 0, 128 );
     strncpy( pc->last_frame_chars, buffer, 127 );
   } else
+  if ( pc->env == ENV_TABLE_CAPTION ) {
+    memset( pc->table_caption, 0, 128 );
+    strncpy( pc->table_caption, buffer, 127 );
+  }
+  else
   if ( pc->env == ENV_TABLE_CELL ) {
     pc->table_current = list_append( pc->table_current, buffer );
   }
@@ -96,7 +101,10 @@ void start( void *data, const char *el, const char **attr ) {
     pc->env = ENV_LIST;
     pc->current_list_level++;
   } else
-  if ( (strcmp( el, "text:p" ) == 0 || strcmp( el, "text:span" ) == 0 ) && pc->env == ENV_LIST ) {
+  if (
+      (strcmp( el, "text:p" ) == 0 || strcmp( el, "text:span" ) == 0 ) &&
+      pc->env == ENV_LIST
+    ) {
     pc->cmd = TEX_ITEM;
   } else
   if ( strcmp( el, "text:soft-page-break" ) == 0 ) {
@@ -126,10 +134,14 @@ void start( void *data, const char *el, const char **attr ) {
   if ( strcmp( el, "draw:image" ) == 0 ) {
     const char *picture_name = get_attribute_value( attr, "xlink:href" );
     if ( strstr( picture_name, "Pictures/" ) ) {
-      fprintf( f, "\\begin{figure}[ht]\n" );
+      fprintf( f, "\\begin{figure}[%s]\n",
+          pc->float_pos
+        );
       fprintf( f, "\\centering\n" );
-      fprintf( f, "  \\includegraphics[width=%lfmm]{%s/%s}\n", pc->current_frame_width,
-          pc->imgdir, strstr( picture_name, "/" )+1 );
+      fprintf( f, "  \\includegraphics[width=%lfmm]{%s/%s}\n",
+          pc->current_frame_width,
+          pc->imgdir,
+          strstr( picture_name, "/" )+1 );
     }
   } else
   if ( strcmp( el, "draw:frame" ) == 0 ) {
@@ -189,8 +201,9 @@ void start( void *data, const char *el, const char **attr ) {
     pc->env = ENV_TABLE;
 
     fprintf( f,
-        "\\begin{table}[ht]\n"
-        "\\centering\n"
+        "\\begin{table}[%s]\n"
+        "  \\centering\n",
+        pc->float_pos
         );
 
     pc->table = list_create();
@@ -201,6 +214,12 @@ void start( void *data, const char *el, const char **attr ) {
   } else
   if ( strcmp( el, "table:table-cell" ) == 0 ) {
     pc->env = ENV_TABLE_CELL;
+  } else
+  if (
+    strcmp( el, "text:p" ) == 0 &&
+    strcmp( get_attribute_value( attr, "text:style-name" ), "Table") == 0
+    ) {
+    pc->style_group = STY_TABLE;
   } else {
     pc->cmd = TEX_DEFAULT;
   }
@@ -233,6 +252,18 @@ void end( void *data, const char *el ) {
   if ( strcmp( el, "text:p" ) == 0 && (pc->env == ENV_DEFAULT || pc->env == -1) ) {
     fprintf( f, "\n\n" );
   } else
+  if ( strcmp( el, "text:p" ) == 0 && pc->env == ENV_TABLE_CAPTION ) {
+    pc->env = ENV_DEFAULT;
+    fprintf( f,
+        "  \\caption{%s}\n"
+        "  \\label{tab:%d}\n"
+        "\\end{table}\n",
+        (pc->style_group == STY_TABLE?pc->table_caption+pc->caption_string_offset:"TODO: No caption"),
+        (++pc->table_count)
+        );
+
+    pc->style_group = STY_NONE;
+  }
   if ( strcmp( el, "draw:frame" ) == 0 ) {
     pc->current_frame_level--;
     if ( pc->current_frame_level == 0 ) {
@@ -246,7 +277,7 @@ void end( void *data, const char *el ) {
     }
   } else
   if ( strcmp( el, "table:table" ) == 0 ) {
-    pc->env = ENV_DEFAULT;
+    pc->env = ENV_TABLE_CAPTION;
 
     pc->table_current = pc->table;
     if ( pc->table->next ) pc->table_current = pc->table_current->next;
@@ -261,7 +292,7 @@ void end( void *data, const char *el ) {
     if ( pc->table->next ) pc->table_current = pc->table_current->next;
 
     int i;
-    fprintf( f, "\\begin{tabular}{" );
+    fprintf( f, "  \\begin{tabular}{" );
     for ( i = 0; i<ncols; i++ ) {
       fprintf( f, "p{%dmm}", pc->table_column_width_mm );
     }
@@ -287,8 +318,7 @@ void end( void *data, const char *el ) {
     }
 
     fprintf( f,
-        "\\end{tabular}\n"
-        "\\end{table}\n"
+        "  \\end{tabular}\n"
         );
 
     list_free( pc->table );

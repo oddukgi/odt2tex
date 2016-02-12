@@ -105,6 +105,7 @@ void usage( char *prog_name ) {
     "             lang: Language for Babel Hyphenation (defaults to en)\n"
     "    captionoffset: Number of characters to strip from caption (0-128, default 2)\n"
     "    tablecolwidth: Table column Width (0-200, default 30)\n"
+    "         floatpos: Float Position (default H)\n"
     "\n"
     , prog_name
     );
@@ -158,7 +159,7 @@ int main( int argc, char *argv[] ) {
   int nargs = parse_options( argc, argv, arguments_current );
 
   fprintf( stdout, "\n ODT2TeX -- Convert ODT files to LaTeX source files\n"
-      "  V 0.0.9 - 2016-02-02\n"
+      "  V 0.0.10 - 2016-02-11\n"
       "  by Simon Wilper (sxw@chronowerks.de)\n"
       "\n"
       );
@@ -284,6 +285,7 @@ int main( int argc, char *argv[] ) {
   fprintf( f_main, "\\documentclass{report}\n\n"
       "\\usepackage[%s]{inputenc}\n"
       "\\usepackage{graphicx}\n"
+      "\\usepackage{float}\n"
       "\\usepackage[%s]{babel}\n\n"
       "\\begin{document}\n\n",
       encoding,
@@ -300,7 +302,13 @@ int main( int argc, char *argv[] ) {
   pc.env = -1;
   pc.current_list_level = 0;
   pc.current_frame_level = 0;
+
   pc.last_frame_chars = (char*)malloc(128);
+  memset( pc.last_frame_chars, 0, 128 );
+
+  pc.table_caption = (char*)malloc(128);
+  memset( pc.table_caption, 0, 128 );
+
   memset(pc.last_frame_chars,0,128);
   pc.current_frame_width = 0.0;
   pc.graphics_count = 0;
@@ -311,7 +319,16 @@ int main( int argc, char *argv[] ) {
   pc.span_level = 0;
   pc.table_column_width_mm = 30;
   pc.table = 0;
+  pc.table_count = 0;
   pc.table_current = 0;
+  pc.float_pos = 0;
+  pc.style_group = STY_NONE;
+
+  char *str_float_pos = get_argument( arguments, "floatpos" );
+  if ( str_float_pos == NULL ) {
+    str_float_pos = "H";
+  }
+  pc.float_pos = str_float_pos;
 
   char *str_table_column_width_mm = get_argument( arguments, "tablecolwidth" );
   if ( str_table_column_width_mm != NULL ) {

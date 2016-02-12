@@ -36,7 +36,8 @@ enum tex_environment {
   ENV_FRAME,
   ENV_TABLE,
   ENV_TABLE_ROW,
-  ENV_TABLE_CELL
+  ENV_TABLE_CELL,
+  ENV_TABLE_CAPTION
 };
 
 enum text_style {
@@ -44,6 +45,11 @@ enum text_style {
   TXT_ITALIC     = 2,
   TXT_UNDERLINE  = 4,
   TXT_SMALLCAPS  = 8
+};
+
+enum style_group {
+  STY_NONE = 0,
+  STY_TABLE = 1
 };
 
 typedef struct parser_context {
@@ -59,6 +65,7 @@ typedef struct parser_context {
   int current_frame_level;
   double current_frame_width;
   char *last_frame_chars;
+  char *table_caption;
   int caption_string_offset;
   int graphics_count;
   char *imgdir;
@@ -68,6 +75,9 @@ typedef struct parser_context {
   int table_column_width_mm;
   struct list *table;
   struct list *table_current;
+  int table_count;
+  char *float_pos;
+  int style_group;
 
 } parser_context_t;
 
