@@ -1,6 +1,7 @@
+sudo: required
 
 before_install:
-  - sudpo apt-get install libzip
+  - sudo apt-get install libzip
 
 install: true
 
