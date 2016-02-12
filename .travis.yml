@@ -1,7 +1,8 @@
-sudo: false
+sudo: required
 
 before_install:
-  - apt-get install libzip2 libzip-dev
+  - sudo apt-get update
+  - sudo apt-get install libzip2 libzip-dev
 
 install: true
 
