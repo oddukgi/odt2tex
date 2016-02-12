@@ -1,4 +1,7 @@
 
+before_install:
+  - sudpo apt-get install libzip
+
 install: true
 
 script:
