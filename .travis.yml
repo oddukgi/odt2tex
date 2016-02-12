@@ -2,7 +2,7 @@ sudo: required
 
 before_install:
   - sudo apt-get update
-  - sudo apt-get install libzip2 libzip-dev
+  - sudo apt-get install libzip libzip-dev
 
 install: true
 
