@@ -22,10 +22,13 @@ all: $(target)
 $(target) : $(objects)
 	$(compiler) -s -Wl,-O2 -o $(target) $(objects) $(libs)
 	
-.PHONY : clean install
+.PHONY : clean install test
 
 clean :
 	-@$(rm) $(target) $(src)/*.o 2>/dev/null
 
 install:
 	install -D $(target) $(DESTDIR)
+
+test:
+	./odt2tex in=testdoc.odt out=testdoc-out
