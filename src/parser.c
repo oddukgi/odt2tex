@@ -1,5 +1,10 @@
 #include "parser.h"
 
+/** Get an attribute from an XML element by giving a key
+ * @param const char **attr attribute list
+ * @param const char  *key key to get the value for
+ * @returns char* value
+ */
 const char *get_attribute_value( const char **attr, const char *key ) {
   unsigned int idx = 0;
   while ( attr[idx] != NULL ) {
@@ -12,6 +17,11 @@ const char *get_attribute_value( const char **attr, const char *key ) {
   return NULL;
 }
 
+/** Process XML characters
+ * @param void *data
+ * @param const char *s
+ * @param int len
+ */
 void chars( void *data, const char *s, int len ) {
   if ( data == NULL ) {
     return;
@@ -53,7 +63,30 @@ void chars( void *data, const char *s, int len ) {
     pc->table_current = list_append( pc->table_current, buffer );
   }
   else {
-    fprintf( f, buffer );
+    char *p = buffer;
+    while ( *p ) {
+      char C = *p;
+      switch( C ) {
+        case '~':
+        case '{':
+        case '}':
+        case '^':
+        case '%':
+        case '$':
+        case '#':
+        case '&':
+        case '_':
+          fprintf( f, "\\%c", C );
+          break;
+        case '\\':
+          fprintf( f, "\\textbackslash" );
+          break;
+        default:
+          fprintf( f, "%c", C );
+
+      }
+      p++;
+    }
   }
 }
 
@@ -102,7 +135,10 @@ void start( void *data, const char *el, const char **attr ) {
     pc->current_list_level++;
   } else
   if (
-      (strcmp( el, "text:p" ) == 0 || strcmp( el, "text:span" ) == 0 ) &&
+      (
+       strcmp( el, "text:p" ) == 0 ||
+       strcmp( el, "text:span" ) == 0
+      ) &&
       pc->env == ENV_LIST
     ) {
     pc->cmd = TEX_ITEM;
