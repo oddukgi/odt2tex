@@ -36,19 +36,16 @@ void chars( void *data, const char *s, int len ) {
   strncpy( buffer, s, len );
 
   if ( pc->cmd == TEX_CHAPTER ) {
-    fprintf( f, "\\chapter{%s}\n", buffer );
+    escape_to_stream_pre_post( f, "\\chapter{", "{\n", buffer );
   } else
   if ( pc->cmd == TEX_SECTION ) {
-    fprintf( f, "\\section{%s}\n", buffer );
+    escape_to_stream_pre_post( f, "\\section{", "}\n", buffer );
   } else
   if ( pc->cmd == TEX_SUBSECTION ) {
-    fprintf( f, "\\subsection{%s}\n", buffer );
+    escape_to_stream_pre_post( f, "\\subsection{", "}\n", buffer );
   } else
   if ( pc->cmd == TEX_SUBSUBSECTION ) {
-    fprintf( f, "\\subsubsection{%s}\n", buffer );
-  } else
-  if ( pc->cmd == TEX_ITEM ) {
-    fprintf( f, "\\item %s\n", buffer );
+    escape_to_stream_pre_post( f, "\\subsubsection{", "}\n", buffer );
   } else
   if ( pc->env == ENV_FRAME ) {
     memset( pc->last_frame_chars, 0, 128 );
@@ -63,34 +60,12 @@ void chars( void *data, const char *s, int len ) {
     pc->table_current = list_append( pc->table_current, buffer );
   }
   else {
-    char *p = buffer;
-    while ( *p ) {
-      char C = *p;
-      switch( C ) {
-        case '~':
-        case '{':
-        case '}':
-        case '^':
-        case '%':
-        case '$':
-        case '#':
-        case '&':
-        case '_':
-          fprintf( f, "\\%c", C );
-          break;
-        case '\\':
-          fprintf( f, "\\textbackslash" );
-          break;
-        default:
-          fprintf( f, "%c", C );
-
-      }
-      p++;
-    }
+    escape_to_stream( f, buffer );
   }
 }
 
-void start( void *data, const char *el, const char **attr ) {
+void start( void *data, const char *el, const char **attr )
+{
   if ( data == NULL ) {
     return;
   }
@@ -101,7 +76,9 @@ void start( void *data, const char *el, const char **attr ) {
   FILE *f = pc->f;
 
   if ( strcmp( el, "text:h" ) == 0 ) {
-    unsigned int outline_level = atoi( get_attribute_value(attr,"text:outline-level") );
+    unsigned int outline_level = atoi(
+        get_attribute_value(attr,"text:outline-level")
+        );
     switch(outline_level) {
       case 1:  pc->cmd = TEX_CHAPTER;       break;
       case 2:  pc->cmd = TEX_SECTION;       break;
@@ -110,10 +87,13 @@ void start( void *data, const char *el, const char **attr ) {
       default: pc->cmd = TEX_SECTION;       break;
     }
   } else
-  if ( strcmp( el, "text:list" ) == 0 ) {
-    struct map *style = map_search( pc->styles, get_attribute_value(attr,"text:style-name") );
+  if ( strcmp( el, "text:list" ) == 0 )
+  {
+    struct map *style = map_search(
+        pc->styles, get_attribute_value(attr,"text:style-name") );
     char *tex_list_style = "itemize";
     pc->current_list_style_type = LST_BULLET;
+
     if ( style != NULL ) {
       switch ( style->value ) {
         case LST_NUMBER:
@@ -133,8 +113,14 @@ void start( void *data, const char *el, const char **attr ) {
     fprintf( f, "\\begin{%s}\n", tex_list_style );
     pc->env = ENV_LIST;
     pc->current_list_level++;
-  } else
-  if (
+  }
+  else if (
+      strcmp( el, "text:list-item" ) == 0
+      )
+  {
+    fprintf( f, "\\item " );
+  }
+  else if (
       (
        strcmp( el, "text:p" ) == 0 ||
        strcmp( el, "text:span" ) == 0
@@ -186,7 +172,10 @@ void start( void *data, const char *el, const char **attr ) {
     pc->current_frame_width = atof( get_attribute_value( attr, "svg:width" ) );
   } else
   if ( (strcmp( el, "style:style" ) == 0) &&
-     (strcmp(get_attribute_value( attr, "style:family" ),"text") == 0 )
+     (
+      strcmp(get_attribute_value( attr, "style:family" ),"text") == 0 ||
+      strcmp(get_attribute_value( attr, "style:family" ),"paragraph") == 0
+     )
       ) {
     const char *stylename = get_attribute_value( attr, "style:name" );
     pc->text_styles_current = map_append( pc->text_styles_current,
@@ -194,16 +183,20 @@ void start( void *data, const char *el, const char **attr ) {
   } else
   if ( strcmp( el, "style:text-properties" ) == 0 ) {
 
-    const char *font_weight = get_attribute_value( attr, "fo:font-weight" );
+    const char *font_weight = get_attribute_value(
+        attr, "fo:font-weight" );
     if ( font_weight != NULL && strcmp(font_weight, "bold" ) == 0 )
       pc->text_styles_current->value |= TXT_BOLD;
 
-    const char *font_style = get_attribute_value( attr, "fo:font-style" );
+    const char *font_style = get_attribute_value(
+        attr, "fo:font-style" );
     if ( font_style != NULL && strcmp(font_style, "italic" ) == 0 )
       pc->text_styles_current->value |= TXT_ITALIC;
 
-    const char *text_underline = get_attribute_value( attr, "style:text-underline-style" );
-    if ( text_underline != NULL && strcmp(text_underline, "solid" ) == 0 )
+    const char *text_underline = get_attribute_value(
+        attr, "style:text-underline-style" );
+    if ( text_underline != NULL &&
+        strcmp(text_underline, "solid" ) == 0 )
       pc->text_styles_current->value |= TXT_UNDERLINE;
 
     const char *font_variant = get_attribute_value( attr, "fo:font-variant" );
@@ -285,7 +278,11 @@ void end( void *data, const char *el ) {
     if ( pc->current_list_level <= 0 )
       pc->env = ENV_DEFAULT;
   } else
-  if ( strcmp( el, "text:p" ) == 0 && (pc->env == ENV_DEFAULT || pc->env == -1) ) {
+  if ( strcmp( el, "text:p" ) == 0 &&
+      (
+       pc->env == ENV_DEFAULT || pc->env == -1
+      ) )
+  {
     fprintf( f, "\n\n" );
   } else
   if ( strcmp( el, "text:p" ) == 0 && pc->env == ENV_TABLE_CAPTION ) {
@@ -294,7 +291,10 @@ void end( void *data, const char *el ) {
         "  \\caption{%s}\n"
         "  \\label{tab:%d}\n"
         "\\end{table}\n",
-        (pc->style_group == STY_TABLE?pc->table_caption+pc->caption_string_offset:"TODO: No caption"),
+        ( pc->style_group == STY_TABLE ?
+          pc->table_caption + pc->caption_string_offset :
+          "TODO: No caption"
+        ),
         (++pc->table_count)
         );
 
@@ -338,7 +338,11 @@ void end( void *data, const char *el ) {
     unsigned int nrows = 0;
     while(pc->table_current) {
       if ( pc->table_current->data != NULL ) {
-        fprintf( f, "%s%s", (nrows==0?"\\bfseries ":""), (char*)pc->table_current->data );
+        fprintf( f, "%s",
+            (nrows==0?"\\bfseries ":"") );
+        escape_to_stream( f,
+            (char*)pc->table_current->data
+            );
         i++;
         if ( i < ncols ) {
           fprintf( f, " & " );
