@@ -57,7 +57,12 @@ void chars( void *data, const char *s, int len ) {
   }
   else
   if ( pc->env == ENV_TABLE_CELL ) {
-    pc->table_current = list_append( pc->table_current, buffer );
+    if ( strlen(pc->table_current->data) > 0 ) {
+      pc->table_current->data = str_append(
+          pc->table_current->data, " " );
+    }
+    pc->table_current->data = str_append(
+        pc->table_current->data, buffer );
   }
   else {
     escape_to_stream( f, buffer );
@@ -169,12 +174,15 @@ void start( void *data, const char *el, const char **attr )
   if ( strcmp( el, "draw:frame" ) == 0 ) {
     pc->env = ENV_FRAME;
     pc->current_frame_level++;
-    pc->current_frame_width = atof( get_attribute_value( attr, "svg:width" ) );
+    pc->current_frame_width = atof(
+        get_attribute_value( attr, "svg:width" ) );
   } else
   if ( (strcmp( el, "style:style" ) == 0) &&
      (
-      strcmp(get_attribute_value( attr, "style:family" ),"text") == 0 ||
-      strcmp(get_attribute_value( attr, "style:family" ),"paragraph") == 0
+      strcmp(get_attribute_value(
+          attr, "style:family" ),"text") == 0 ||
+      strcmp(get_attribute_value(
+          attr, "style:family" ),"paragraph") == 0
      )
       ) {
     const char *stylename = get_attribute_value( attr, "style:name" );
@@ -199,7 +207,8 @@ void start( void *data, const char *el, const char **attr )
         strcmp(text_underline, "solid" ) == 0 )
       pc->text_styles_current->value |= TXT_UNDERLINE;
 
-    const char *font_variant = get_attribute_value( attr, "fo:font-variant" );
+    const char *font_variant = get_attribute_value(
+        attr, "fo:font-variant" );
     if ( font_variant != NULL && strcmp(font_variant, "small-caps" ) == 0 )
       pc->text_styles_current->value |= TXT_SMALLCAPS;
 
@@ -235,6 +244,8 @@ void start( void *data, const char *el, const char **attr )
         pc->float_pos
         );
 
+    // step 1: create a new table list in parsing context table and
+    // assign the current cell to table_current
     pc->table = list_create();
     pc->table_current = pc->table;
   } else
@@ -243,11 +254,13 @@ void start( void *data, const char *el, const char **attr )
   } else
   if ( strcmp( el, "table:table-cell" ) == 0 ) {
     pc->env = ENV_TABLE_CELL;
+    pc->table_current = list_append( pc->table_current, "" );
   } else
   if (
     strcmp( el, "text:p" ) == 0 &&
     strcmp( get_attribute_value( attr, "text:style-name" ), "Table") == 0
-    ) {
+    )
+  {
     pc->style_group = STY_TABLE;
   } else {
     pc->cmd = TEX_DEFAULT;
@@ -304,8 +317,11 @@ void end( void *data, const char *el ) {
     pc->current_frame_level--;
     if ( pc->current_frame_level == 0 ) {
       pc->graphics_count++;
-      if ( pc->last_frame_chars != NULL && strlen(pc->last_frame_chars) > 0 )
-        fprintf( f, "  \\caption{%s}\n", pc->last_frame_chars+pc->caption_string_offset );
+      if ( pc->last_frame_chars != NULL &&
+          strlen(pc->last_frame_chars) > 0 )
+        fprintf( f, "  \\caption{%s}\n",
+            pc->last_frame_chars+pc->caption_string_offset );
+
       fprintf( f, "  \\label{fig%d}\n", pc->graphics_count );
       fprintf( f, "\\end{figure}\n\n" );
       memset( pc->last_frame_chars, 0, 128 );
