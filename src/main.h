@@ -13,8 +13,13 @@
 #include "map.h"
 #include "list.h"
 #include "parser.h"
+#include "util.h"
 
-#define BUF_SIZE 4096
+#define  BUF_SIZE 4096
+
+#define   VERSION "0.0.11"
+#define      DATE "2016-07-16"
+#define BUILDNAME "Jack Decker"
 
 enum list_style_type {
   LST_BULLET = 0,

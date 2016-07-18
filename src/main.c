@@ -1,6 +1,8 @@
 #include "main.h"
 
-int extract_file_to( zip_t* zipfile, const char* filename, const char *target ) {
+int extract_file_to(
+    zip_t* zipfile, const char* filename, const char *target )
+{
   fprintf( stdout, "  >> Extracting %s to %s\n", filename, target );
   zip_file_t *f = zip_fopen( zipfile, filename, ZIP_FL_UNCHANGED );
   if ( f == NULL ) {
@@ -17,7 +19,8 @@ int extract_file_to( zip_t* zipfile, const char* filename, const char *target ) 
   }
 
   zip_stat_t stat_info;
-  zip_stat( zipfile, filename, ZIP_FL_ENC_GUESS|ZIP_FL_UNCHANGED, &stat_info );
+  zip_stat( zipfile,
+      filename, ZIP_FL_ENC_GUESS|ZIP_FL_UNCHANGED, &stat_info );
 
   unsigned long content_length = stat_info.size;
 
@@ -35,15 +38,18 @@ int extract_file_to( zip_t* zipfile, const char* filename, const char *target ) 
   FILE *f_out = fopen( target, "wb" );
   if ( f_out == NULL ) {
     free(buffer);
-    fprintf( stderr, "  !! Unable to open output file: %s\n", strerror( errno ) );
+    fprintf( stderr, "  !! Unable to open output file: %s\n",
+        strerror( errno ) );
     return -1;
   }
-  unsigned long bytes_written = fwrite( buffer, 1, content_length, f_out );
+  unsigned long bytes_written = fwrite(
+      buffer, 1, content_length, f_out );
   fclose(f_out);
   zip_fclose(f);
 
   if ( content_length != bytes_written ) {
-    fprintf( stderr, "  !! Content (%ld) differs from Bytes written (%ld).\n",
+    fprintf( stderr,
+        "  !! Content (%ld) differs from Bytes written (%ld).\n",
        content_length, bytes_written );
     free(buffer);
     return -1;
@@ -63,7 +69,9 @@ int extract_file_to( zip_t* zipfile, const char* filename, const char *target ) 
  *
  * @returns 0 on success, -1 on failure
  */
-int extract_all_files( zip_t* zip, const char *prefix, const char *target_dir ) {
+int extract_all_files(
+    zip_t* zip, const char *prefix, const char *target_dir )
+{
   if ( zip == NULL ) {
     return -1;
   }
@@ -72,7 +80,8 @@ int extract_all_files( zip_t* zip, const char *prefix, const char *target_dir ) 
 
   long i;
   for ( i=0; i<nfiles; i++ ) {
-    const char *zip_filename_full = zip_get_name( zip, i, ZIP_FL_UNCHANGED );
+    const char *zip_filename_full = zip_get_name(
+        zip, i, ZIP_FL_UNCHANGED );
     if ( strstr( zip_filename_full, prefix ) ) {
       const char *zip_filename = zip_filename_full+strlen(prefix);
 
@@ -103,7 +112,8 @@ void usage( char *prog_name ) {
     "              out: Output directory to write the files to\n"
     "              enc: TeX Encoding (defaults to UTF-8)\n"
     "             lang: Language for Babel Hyphenation (defaults to en)\n"
-    "    captionoffset: Number of characters to strip from caption (0-128, default 2)\n"
+    "    captionoffset: Number of characters to strip from\n"
+    "                   caption (0-128, default 2)\n"
     "    tablecolwidth: Table column Width (0-200, default 30)\n"
     "         floatpos: Float Position (default H)\n"
     "\n"
@@ -153,13 +163,12 @@ char *get_argument( struct list *arguments, const char *arg_name ) {
 }
 
 int main( int argc, char *argv[] ) {
-
   struct list *arguments = list_create();
   struct list  *arguments_current = arguments;
   int nargs = parse_options( argc, argv, arguments_current );
 
   fprintf( stdout, "\n ODT2TeX -- Convert ODT files to LaTeX source files\n"
-      "  V 0.0.10 - 2016-02-11\n"
+      "  V " VERSION " (" BUILDNAME ") - " DATE "\n"
       "  by Simon Wilper (sxw@chronowerks.de)\n"
       "\n"
       );
@@ -286,6 +295,7 @@ int main( int argc, char *argv[] ) {
       "\\usepackage[%s]{inputenc}\n"
       "\\usepackage{graphicx}\n"
       "\\usepackage{float}\n"
+      "\\usepackage{textcomp}\n"
       "\\usepackage[%s]{babel}\n\n"
       "\\begin{document}\n\n",
       encoding,
@@ -364,6 +374,7 @@ int main( int argc, char *argv[] ) {
 
   fprintf( f_main, "\\end{document}\n" );
 
+  free( pc.table_caption );
   free( pc.last_frame_chars );
   list_free(arguments);
   map_free_all(pc.styles);
