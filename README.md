@@ -1,6 +1,6 @@
 # ODT to TeX converter
 
-V0.0.10 - 2016-02-12
+V0.0.11 - 2016-07-16
 Simon Wilper
 
 Plain C program that takes a ODT file and an output directory to write
@@ -13,16 +13,11 @@ Dependencies are:
 - **libzip** for reading the contents.xml from the zipped ODT file
 - **expat** for running the XML parse process
 
-Build system used is tup or make.
+The build system used is plain make as it is still available on most
+platforms and I don't want to talk people into installing a fancy one
+just to get turned this couple of source files turned into a binary.
 
-With tup:
-
-```
-> tup init
-> tup
-```
-
-With make:
+To get the binary `odt2tex` in the same directory as the Makefile type
 
 ```
 > make

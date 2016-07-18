@@ -4,15 +4,19 @@ incdirs = -Iinc
 src = src
 rm = rm
 inc = inc
-flags = -pipe -Wall -O2
+optimize = -O0
+flags = -pipe -g -ggdb -Wall $(optimize)
 libs = -lexpat -lzip
+#strip = -s
+strip =
 
 # Objects for Main Binary
 objects =\
   $(src)/list.o\
   $(src)/main.o\
   $(src)/map.o\
-  $(src)/parser.o
+  $(src)/parser.o\
+  $(src)/util.o
 
 .c.o:
 	$(compiler) -c $(incdirs) $(flags) -o "$@" "$<"
@@ -20,7 +24,7 @@ objects =\
 all: $(target)
 
 $(target) : $(objects)
-	$(compiler) -s -Wl,-O2 -o $(target) $(objects) $(libs)
+	$(compiler) $(strip) -Wl,$(optimize) -o $(target) $(objects) $(libs)
 	
 .PHONY : clean install test
 
