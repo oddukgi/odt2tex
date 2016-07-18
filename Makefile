@@ -4,11 +4,10 @@ incdirs = -Iinc
 src = src
 rm = rm
 inc = inc
-optimize = -O0
-flags = -pipe -g -ggdb -Wall $(optimize)
+optimize = -O2
+flags = -pipe -Wall $(optimize)
 libs = -lexpat -lzip
-#strip = -s
-strip =
+strip = -s
 
 # Objects for Main Binary
 objects =\
