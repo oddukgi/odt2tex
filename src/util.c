@@ -1,5 +1,12 @@
 #include "util.h"
 
+char *str_append( char* a, char *b ) {
+  size_t s = strlen(a)+strlen(b)+1;
+  char *res = realloc(a,s);
+  strncat( res, b, s );
+  return res;
+}
+
 int escape_to_stream_pre_post( FILE *f,
     const char *pre, const char *post, char *buffer ) {
 
