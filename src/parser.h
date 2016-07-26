@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "main.h"
+#include "mathmlparser.h"
 
 const char *get_attribute_value( const char**, const char* );
 void chars( void*, const char*, int );

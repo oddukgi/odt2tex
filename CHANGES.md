@@ -1,6 +1,9 @@
 
 ## History Of Changes
 
+* **2016-07-25 v0.0.12**
+  - Equations are now extracted and represented as `IEEEeqnarray`
+
 * **2016-07-16 v0.0.11**
   - LaTeX special characters are now escaped
   - Table content containing more than one paragraph is now handled

@@ -17,9 +17,9 @@
 
 #define  BUF_SIZE 4096
 
-#define   VERSION "0.0.11"
-#define      DATE "2016-07-16"
-#define BUILDNAME "Jack Decker"
+#define   VERSION "0.0.12"
+#define      DATE "2016-07-25"
+#define BUILDNAME "Kington"
 
 enum list_style_type {
   LST_BULLET = 0,
@@ -42,7 +42,9 @@ enum tex_environment {
   ENV_TABLE,
   ENV_TABLE_ROW,
   ENV_TABLE_CELL,
-  ENV_TABLE_CAPTION
+  ENV_TABLE_CAPTION,
+  ENV_EQUATION,
+  ENV_IMAGE
 };
 
 enum text_style {
@@ -59,6 +61,7 @@ enum style_group {
 
 typedef struct parser_context {
   FILE *f;
+  zip_t *odt;
   char *current_xml_tag;
   unsigned int cmd;
   unsigned int env;

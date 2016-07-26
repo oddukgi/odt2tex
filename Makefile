@@ -15,7 +15,8 @@ objects =\
   $(src)/main.o\
   $(src)/map.o\
   $(src)/parser.o\
-  $(src)/util.o
+  $(src)/util.o\
+  $(src)/mathmlparser.o
 
 .c.o:
 	$(compiler) -c $(incdirs) $(flags) -o "$@" "$<"

@@ -36,7 +36,7 @@ void chars( void *data, const char *s, int len ) {
   strncpy( buffer, s, len );
 
   if ( pc->cmd == TEX_CHAPTER ) {
-    escape_to_stream_pre_post( f, "\\chapter{", "{\n", buffer );
+    escape_to_stream_pre_post( f, "\\chapter{", "}\n", buffer );
   } else
   if ( pc->cmd == TEX_SECTION ) {
     escape_to_stream_pre_post( f, "\\section{", "}\n", buffer );
@@ -170,6 +170,122 @@ void start( void *data, const char *el, const char **attr )
           pc->imgdir,
           strstr( picture_name, "/" )+1 );
     }
+  } else
+  if ( strcmp( el, "draw:object" ) == 0 ) {
+    pc->env = ENV_EQUATION;
+    const char *object_name = get_attribute_value( attr, "xlink:href" );
+
+    char object_name_rel[BUF_SIZE];
+    memset( object_name_rel, 0, BUF_SIZE );
+
+    if ( object_name[0] == '.' && object_name[1] == '/' ) {
+      char *object_name_stripped = (char*)object_name+2;
+      strcat( object_name_rel, object_name_stripped );
+    } else {
+      strcat( object_name_rel, object_name );
+    }
+
+    if ( object_name_rel[strlen(object_name_rel)-1] != '/' ) {
+      strcat( object_name_rel, "/content.xml" );
+    } else {
+      strcat( object_name_rel, "content.xml" );
+    }
+
+    zip_file_t *object_contents_xml = zip_fopen(
+        pc->odt,
+        object_name_rel,
+        ZIP_FL_UNCHANGED
+        );
+    if ( object_contents_xml == NULL ) {
+      int zep = 0;
+      int sep = 0;
+      char buffer[BUF_SIZE];
+      zip_error_get( pc->odt, &zep, &sep );
+      zip_error_to_str( buffer, BUF_SIZE, zep, sep );
+      fprintf( stderr, "  !! Unable to open %s (%s): %s\n",
+          object_name_rel,
+          object_name,
+          buffer
+        );
+      return;
+    }
+
+    zip_stat_t stat_info;
+    zip_stat(
+        pc->odt,
+        object_name_rel,
+        ZIP_FL_ENC_GUESS | ZIP_FL_UNCHANGED,
+        &stat_info
+      );
+  
+    unsigned long content_length = stat_info.size;
+
+    fprintf( stdout, "  >> Ecountered draw:object %s of size %ld\n",
+        object_name_rel,
+        content_length
+        );
+  
+    void *buffer = malloc(content_length);
+    unsigned long bytes_read = zip_fread(
+        object_contents_xml,
+        buffer,
+        content_length
+        );
+    zip_fclose( object_contents_xml );
+  
+    if ( bytes_read != content_length ) {
+      zip_fclose(object_contents_xml);
+      free(buffer);
+      fprintf( stderr, "  !! Content fragmented\n" );
+      return;
+    }
+
+    parser_context_math_t mpc;
+    mpc.f = pc->f;
+    mpc.math_env = 0;
+    mpc.row_index = 0;
+    mpc.global_row_index = 0;
+    mpc.nesting_level = 0;
+    for ( int i = 0; i<128; i++ ) mpc.env_stack[i] = MATH_ENV_NONE;
+    mpc.item_index = 0;
+
+    parser_context_precheck_t pc_pre;
+    pc_pre.line_count = 0;
+    pc_pre.math_flavour = -1;
+
+    XML_Parser p_pre = XML_ParserCreate("UTF-8");
+    XML_SetUserData( p_pre, &pc_pre );
+    XML_SetElementHandler( p_pre, start_precheck, NULL );
+
+    XML_Parse( p_pre, buffer, bytes_read, 1 );
+    XML_ParserFree(p_pre);
+
+    mpc.lines = pc_pre.line_count;
+    mpc.line_count = 0;
+    mpc.math_flavour = pc_pre.math_flavour;
+
+    XML_Parser p = XML_ParserCreate("UTF-8");
+    XML_SetUserData( p, &mpc );
+
+    if ( mpc.math_flavour == MATH_FLAV_ODF ) {
+      XML_SetElementHandler( p, start_odf, end_odf );
+    } else
+    if ( mpc.math_flavour == MATH_FLAV_OOX ) {
+      XML_SetElementHandler( p, start_oox, end_oox );
+    } else {
+      fprintf( stderr, "  !! ERROR: Math flavour not detected\n" );
+      return;
+    }
+
+    XML_SetCharacterDataHandler( p, chars_odf );
+
+    fprintf( f, "\\begin{IEEEeqnarray}{rCl}\n" );
+    XML_Parse( p, buffer, bytes_read, 1 );
+    fprintf( f, "\n\\end{IEEEeqnarray}\n" );
+
+    XML_ParserFree(p);
+    free(buffer);
+
   } else
   if ( strcmp( el, "draw:frame" ) == 0 ) {
     pc->env = ENV_FRAME;
@@ -322,8 +438,10 @@ void end( void *data, const char *el ) {
         fprintf( f, "  \\caption{%s}\n",
             pc->last_frame_chars+pc->caption_string_offset );
 
-      fprintf( f, "  \\label{fig%d}\n", pc->graphics_count );
-      fprintf( f, "\\end{figure}\n\n" );
+      if ( pc->env != ENV_EQUATION ) {
+        fprintf( f, "  \\label{fig%d}\n", pc->graphics_count );
+        fprintf( f, "\\end{figure}\n\n" );
+      }
       memset( pc->last_frame_chars, 0, 128 );
       pc->env = ENV_DEFAULT;
     }

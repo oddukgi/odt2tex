@@ -296,6 +296,7 @@ int main( int argc, char *argv[] ) {
       "\\usepackage{graphicx}\n"
       "\\usepackage{float}\n"
       "\\usepackage{textcomp}\n"
+      "\\usepackage[retainorgcmds]{IEEEtrantools}\n"
       "\\usepackage[%s]{babel}\n\n"
       "\\begin{document}\n\n",
       encoding,
@@ -308,6 +309,7 @@ int main( int argc, char *argv[] ) {
   pc.styles_current = pc.styles;
   pc.current_list_style_type = -1;
   pc.f = f_main;
+  pc.odt = odt;
   pc.cmd = -1;
   pc.env = -1;
   pc.current_list_level = 0;
