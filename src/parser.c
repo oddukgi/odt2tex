@@ -248,6 +248,7 @@ void start( void *data, const char *el, const char **attr )
     mpc.nesting_level = 0;
     for ( int i = 0; i<128; i++ ) mpc.env_stack[i] = MATH_ENV_NONE;
     mpc.item_index = 0;
+    mpc.ignore = 0;
 
     parser_context_precheck_t pc_pre;
     pc_pre.line_count = 0;

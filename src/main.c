@@ -175,6 +175,7 @@ int main( int argc, char *argv[] ) {
 
   if ( nargs < 3 ) {
     usage( argv[0] );
+    list_free( arguments );
     return -1;
   }
 
