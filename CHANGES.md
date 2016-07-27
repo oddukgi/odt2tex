@@ -1,6 +1,10 @@
 
 ## History Of Changes
 
+* **2016-07-27 v0.0.13**
+  - Fixed some possible memleaks, thanks Valgrind again
+  - Included Patch from Thomas Klausner fixing Makefile glitches
+
 * **2016-07-25 v0.0.12**
   - Equations are now extracted and represented as `IEEEeqnarray`
 
