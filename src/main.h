@@ -17,8 +17,8 @@
 
 #define  BUF_SIZE 4096
 
-#define   VERSION "0.0.12"
-#define      DATE "2016-07-25"
+#define   VERSION "0.0.13"
+#define      DATE "2016-07-27"
 #define BUILDNAME "Kington"
 
 enum list_style_type {
